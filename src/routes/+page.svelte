@@ -7,13 +7,25 @@
 	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
 	let newItem = $state('');
 	let sortedItems = $state<string[]>([]);
+	let insertItem = $state('');
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
+	let highlightedItem = $state<string | null>(null);
 
 	function addItem() {
 		if (newItem.trim()) {
 			items = [...items, newItem.trim()];
 			newItem = '';
 		}
+	}
+
+	async function compareItems(newItem: string, existingItem: string): Promise<boolean> {
+		currentComparison = { item1: existingItem, item2: newItem };
+		const choice = await new Promise<string>((resolve) => {
+			resolveCurrentComparison = resolve;
+		});
+		currentComparison = null;
+		resolveCurrentComparison = null;
+		return choice === newItem;
 	}
 
 	async function mergeArrays(left: string[], right: string[]): Promise<string[]> {
@@ -25,20 +37,12 @@
 			const item1 = left[leftIndex];
 			const item2 = right[rightIndex];
 
-			currentComparison = { item1, item2 };
-			const choice = await new Promise<string>((resolve) => {
-				resolveCurrentComparison = resolve;
-			});
-
-			currentComparison = null;
-			resolveCurrentComparison = null;
-
-			if (choice === item1) {
-				result.push(item1);
-				leftIndex++;
-			} else {
+			if (await compareItems(item2, item1)) {
 				result.push(item2);
 				rightIndex++;
+			} else {
+				result.push(item1);
+				leftIndex++;
 			}
 		}
 
@@ -56,6 +60,45 @@
 		const sortedRight = await mergeSort(right);
 
 		return await mergeArrays(sortedLeft, sortedRight);
+	}
+
+	async function binaryInsert(item: string) {
+		if (!sortedItems.length) {
+			sortedItems = [item];
+			return 0;
+		}
+
+		let left = 0;
+		let right = sortedItems.length - 1;
+		const currentList = [...sortedItems];
+
+		while (left <= right) {
+			const mid = Math.floor((left + right) / 2);
+
+			// If the new item should come before the middle item
+			if (await compareItems(item, currentList[mid])) {
+				right = mid - 1;
+			} else {
+				left = mid + 1;
+			}
+		}
+
+		// Insert at the found position
+		currentList.splice(left, 0, item);
+		sortedItems = currentList;
+		return left;
+	}
+
+	async function insertNewItem() {
+		if (insertItem.trim() && sortedItems.length > 0) {
+			const item = insertItem.trim();
+			insertItem = '';
+			await binaryInsert(item);
+			highlightedItem = item;
+			setTimeout(() => {
+				highlightedItem = null;
+			}, 2000);
+		}
 	}
 
 	function startSorting() {
@@ -130,9 +173,23 @@
 		{#if sortedItems.length > 0}
 			<Card class="p-4">
 				<h2 class="mb-4 text-xl font-semibold">Final Ranking</h2>
+				<form
+					class="mb-4 flex gap-2"
+					onsubmit={(e) => {
+						e.preventDefault();
+						insertNewItem();
+					}}
+				>
+					<Input type="text" placeholder="Insert new item" bind:value={insertItem} class="flex-1" />
+					<Button type="submit">Insert</Button>
+				</form>
 				<ol class="list-decimal pl-5">
 					{#each sortedItems as item}
-						<li>{item}</li>
+						<li
+							class={item === highlightedItem ? 'bg-primary/20 transition-colors duration-500' : ''}
+						>
+							{item}
+						</li>
 					{/each}
 				</ol>
 			</Card>
