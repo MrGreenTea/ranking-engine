@@ -2,6 +2,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Card } from '$lib/components/ui/card';
+	import { flip } from 'svelte/animate';
+	import { fade } from 'svelte/transition';
 
 	let items = $state<string[]>([]);
 	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
@@ -177,10 +179,12 @@
 					<Input type="text" placeholder="Insert new item" bind:value={insertItem} class="flex-1" />
 					<Button type="submit">Insert</Button>
 				</form>
-				<ol class="list-decimal pl-5">
-					{#each sortedItems as item}
+				<ol class="pl-5">
+					{#each sortedItems as item (item)}
 						<li
 							class={item === highlightedItem ? 'bg-primary/20 transition-colors duration-500' : ''}
+							animate:flip={{ duration: 300 }}
+							transition:fade={{ duration: 200 }}
 						>
 							{item}
 						</li>
