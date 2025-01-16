@@ -111,12 +111,6 @@
 	function choose(winner: string) {
 		resolveCurrentComparison?.(winner);
 	}
-
-	$effect(() => {
-		if (items.length >= 2 && !currentComparison) {
-			sortedItems = [];
-		}
-	});
 </script>
 
 <main class="container mx-auto max-w-2xl p-4">
