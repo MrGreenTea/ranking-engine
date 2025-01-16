@@ -136,9 +136,13 @@
 			{#if items.length > 0}
 				<div class="mt-4">
 					<h3 class="mb-2 text-lg font-medium">Current Items:</h3>
-					<ul class="list-disc pl-5">
+					<ul class="space-y-2">
 						{#each items as item}
-							<li>{item}</li>
+							<li>
+								<Card class="p-3">
+									<p class="text-sm">{item}</p>
+								</Card>
+							</li>
 						{/each}
 					</ul>
 				</div>
@@ -179,14 +183,19 @@
 					<Input type="text" placeholder="Insert new item" bind:value={insertItem} class="flex-1" />
 					<Button type="submit">Insert</Button>
 				</form>
-				<ol class="pl-5">
-					{#each sortedItems as item (item)}
+				<ol class="space-y-2">
+					{#each sortedItems as item, i (item)}
 						<li
 							class={item === highlightedItem ? 'bg-primary/20 transition-colors duration-500' : ''}
 							animate:flip={{ duration: 300 }}
 							transition:fade={{ duration: 200 }}
 						>
-							{item}
+							<Card class="p-3">
+								<div class="flex items-center gap-3">
+									<span class="text-sm font-medium text-muted-foreground">{i + 1}</span>
+									<p class="text-sm">{item}</p>
+								</div>
+							</Card>
 						</li>
 					{/each}
 				</ol>
