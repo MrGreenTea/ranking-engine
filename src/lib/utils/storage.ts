@@ -1,4 +1,8 @@
-type StorageKey = 'ranking-items' | 'ranking-sorted-items' | 'collaborative-rankings' | 'collaborative-sort-by';
+type StorageKey =
+	| 'ranking-items'
+	| 'ranking-sorted-items'
+	| 'collaborative-rankings'
+	| 'collaborative-sort-by';
 
 export function loadFromStorage<T>(key: StorageKey, defaultValue: T): T {
 	if (typeof window === 'undefined') return defaultValue;
