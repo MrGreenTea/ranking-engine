@@ -216,11 +216,9 @@
 							animate:flip={{ duration: 300 }}
 							transition:fade={{ duration: 200 }}
 						>
-							<Card class="p-3">
-								<div class="flex items-center gap-3">
-									<span class="text-sm font-medium text-muted-foreground">{i + 1}</span>
-									<p class="text-sm">{item}</p>
-								</div>
+							<Card class="p-3 flex items-center gap-3">
+								<span style="user-select: none" class="text-sm font-medium text-muted-foreground">{i + 1}.</span>
+								<p class="text-sm flex-1">{item}</p>
 							</Card>
 						</li>
 					{/each}
