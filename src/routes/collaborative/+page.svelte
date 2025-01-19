@@ -2,6 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import { fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 
@@ -18,9 +19,19 @@
 		spread: number;
 	};
 
+	type SortBy = 'median' | 'min' | 'max' | 'spread';
+
 	let rankings = $state<Ranking[]>([]);
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
+	let sortBy = $state<SortBy>('median');
+
+	const sortOptions: { value: SortBy; label: string }[] = [
+		{ value: 'median', label: 'Median Position' },
+		{ value: 'min', label: 'Best Position' },
+		{ value: 'max', label: 'Worst Position' },
+		{ value: 'spread', label: 'Position Spread' }
+	];
 
 	function addRanking() {
 		if (!newRanking.trim()) return;
@@ -34,13 +45,12 @@
 
 		rankings = [...rankings, { userId, items }];
 		newRanking = '';
-		userId = crypto.randomUUID(); // Generate new ID for next ranking
+		userId = crypto.randomUUID();
 	}
 
 	function calculateStats(): ItemStats[] {
 		if (rankings.length === 0) return [];
 
-		// Get unique items from all rankings
 		const uniqueItems = new Set<string>();
 		rankings.forEach((ranking) => {
 			ranking.items.forEach((item) => uniqueItems.add(item));
@@ -50,9 +60,9 @@
 			const sorted = rankings
 				.map((ranking) => {
 					const index = ranking.items.indexOf(item);
-					// add +1 to the index because humans expect 1-based indexing
 					return index === -1 ? uniqueItems.size + 1 : index + 1;
-				}).sort();
+				})
+				.sort();
 
 			const mid = Math.floor(sorted.length / 2);
 			const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
@@ -68,7 +78,7 @@
 			};
 		});
 
-		return stats.sort((a, b) => a.median - b.median);
+		return stats.sort((a, b) => a[sortBy] - b[sortBy]);
 	}
 
 	function removeRanking(userId: string) {
@@ -100,7 +110,19 @@
 
 		{#if rankings.length > 0}
 			<Card class="p-6">
-				<h2 class="mb-4 text-xl font-semibold">Combined Statistics</h2>
+				<div class="mb-6 space-y-4">
+					<h2 class="text-xl font-semibold">Combined Statistics</h2>
+					<Select type="single" bind:value={sortBy}>
+						<SelectTrigger>
+							{sortOptions.find((opt) => opt.value === sortBy)?.label ?? 'Sort by'}
+						</SelectTrigger>
+						<SelectContent>
+							{#each sortOptions as option}
+								<SelectItem value={option.value}>{option.label}</SelectItem>
+							{/each}
+						</SelectContent>
+					</Select>
+				</div>
 				<div class="space-y-4">
 					{#each calculateStats() as stat (stat.item)}
 						<div
@@ -109,10 +131,17 @@
 							transition:fade
 						>
 							<span>{stat.item}</span>
-							<div class="text-sm">
-								<span class="font-medium">Median: {stat.median.toFixed(1)}</span>
-								<span class="text-muted-foreground">
-									(Range: {stat.min}-{stat.max}, Spread: {stat.spread})
+							<div class="text-sm text-muted-foreground">
+								<span class="font-medium">
+									{#if sortBy === 'median'}
+										Median: {stat.median.toFixed(1)}
+									{:else if sortBy === 'min'}
+										Best: {stat.min}
+									{:else if sortBy === 'max'}
+										Worst: {stat.max}
+									{:else}
+										Spread: {stat.spread}
+									{/if}
 								</span>
 							</div>
 						</div>
