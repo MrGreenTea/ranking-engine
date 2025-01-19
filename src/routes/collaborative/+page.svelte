@@ -3,7 +3,13 @@
 	import { Card } from '$lib/components/ui/card';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
-	import { fade } from 'svelte/transition';
+	import {
+		Accordion,
+		AccordionContent,
+		AccordionItem,
+		AccordionTrigger
+	} from '$lib/components/ui/accordion';
+	import { slide } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 
 	type Ranking = {
@@ -62,7 +68,7 @@
 					const index = ranking.items.indexOf(item);
 					return index === -1 ? uniqueItems.size + 1 : index + 1;
 				})
-				.sort();
+				.sort((a, b) => a - b);
 
 			const mid = Math.floor(sorted.length / 2);
 			const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
@@ -123,29 +129,51 @@
 						</SelectContent>
 					</Select>
 				</div>
-				<div class="space-y-4">
-					{#each calculateStats() as stat (stat.item)}
-						<div
-							class="flex items-center justify-between"
-							animate:flip={{ duration: 300 }}
-							transition:fade
-						>
-							<span>{stat.item}</span>
-							<div class="text-sm text-muted-foreground">
-								<span class="font-medium">
-									{#if sortBy === 'median'}
-										Median: {stat.median.toFixed(1)}
-									{:else if sortBy === 'min'}
-										Best: {stat.min}
-									{:else if sortBy === 'max'}
-										Worst: {stat.max}
-									{:else}
-										Spread: {stat.spread}
-									{/if}
-								</span>
+				<div class="space-y-2">
+					<Accordion type="single">
+						{#each calculateStats() as stat (stat.item)}
+							<div animate:flip={{ duration: 300 }}>
+								<AccordionItem value={stat.item}>
+									<AccordionTrigger>
+										<div class="flex w-full items-center justify-between pr-4">
+											<span>{stat.item}</span>
+											<span class="text-sm font-medium">
+												{#if sortBy === 'median'}
+													Median: {stat.median.toFixed(1)}
+												{:else if sortBy === 'min'}
+													Best: {stat.min}
+												{:else if sortBy === 'max'}
+													Worst: {stat.max}
+												{:else}
+													Spread: {stat.spread}
+												{/if}
+											</span>
+										</div>
+									</AccordionTrigger>
+									<AccordionContent>
+										<div class="grid grid-cols-2 gap-2 rounded-md bg-muted p-2 text-sm">
+											<div>
+												<span class="text-muted-foreground">Median:</span>
+												<span class="font-medium">{stat.median.toFixed(1)}</span>
+											</div>
+											<div>
+												<span class="text-muted-foreground">Best:</span>
+												<span class="font-medium">{stat.min}</span>
+											</div>
+											<div>
+												<span class="text-muted-foreground">Worst:</span>
+												<span class="font-medium">{stat.max}</span>
+											</div>
+											<div>
+												<span class="text-muted-foreground">Spread:</span>
+												<span class="font-medium">{stat.spread}</span>
+											</div>
+										</div>
+									</AccordionContent>
+								</AccordionItem>
 							</div>
-						</div>
-					{/each}
+						{/each}
+					</Accordion>
 				</div>
 			</Card>
 
@@ -153,7 +181,7 @@
 				<h2 class="mb-4 text-xl font-semibold">Individual Rankings</h2>
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{#each rankings as ranking (ranking.userId)}
-						<div class="relative space-y-2" transition:fade>
+						<div class="relative space-y-2" transition:slide>
 							<div class="flex items-center justify-between">
 								<h3 class="font-medium">Ranking {rankings.indexOf(ranking) + 1}</h3>
 								<Button
