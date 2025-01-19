@@ -131,6 +131,14 @@
 		sortedItems = [];
 		clearStorage(['ranking-items', 'ranking-sorted-items']);
 	}
+
+	async function copyList() {
+		try {
+			await navigator.clipboard.writeText(sortedItems.join('\n'));
+		} catch (err) {
+			console.error('Failed to copy list:', err);
+		}
+	}
 </script>
 
 <main class="container mx-auto max-w-2xl p-4">
@@ -197,8 +205,27 @@
 
 		<!-- Results Section -->
 		{#if sortedItems.length > 0}
-			<Card class="p-4">
-				<h2 class="mb-4 text-xl font-semibold">Final Ranking</h2>
+			<Card class="p-6">
+				<div class="mb-4 flex items-center justify-between">
+					<h2 class="text-xl font-semibold">Sorted List</h2>
+					<Button onclick={copyList} variant="outline" class="gap-2">
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path
+								d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+							/></svg
+						>
+						Copy List
+					</Button>
+				</div>
 				<form
 					class="mb-4 flex gap-2"
 					onsubmit={(e) => {
