@@ -132,6 +132,18 @@
 		clearStorage(['ranking-items', 'ranking-sorted-items']);
 	}
 
+	function removeItem(item: string) {
+		items = items.filter((i) => i !== item);
+		// Also remove from sorted items if present
+		if (sortedItems.includes(item)) {
+			sortedItems = sortedItems.filter((i) => i !== item);
+		}
+	}
+
+	function removeSortedItem(item: string) {
+		sortedItems = sortedItems.filter((i) => i !== item);
+	}
+
 	async function copyList() {
 		try {
 			await navigator.clipboard.writeText(sortedItems.join('\n'));
@@ -154,37 +166,56 @@
 
 	<div class="space-y-8">
 		<!-- Add Items Section -->
-		<Card class="p-4">
-			<h2 class="mb-4 text-xl font-semibold">Add Items</h2>
-			<form
-				class="flex gap-2"
-				onsubmit={(e) => {
-					e.preventDefault();
-					addItem();
-				}}
-			>
-				<Input type="text" placeholder="Enter an item" bind:value={newItem} class="flex-1" />
-				<Button type="submit">Add</Button>
-			</form>
+		<Card class="p-6">
+			<h2 class="mb-4 text-xl font-semibold">Items to Rank</h2>
+			<div class="space-y-4">
+				<form
+					class="flex gap-2"
+					onsubmit={(e) => {
+						e.preventDefault();
+						addItem();
+					}}
+				>
+					<Input bind:value={newItem} placeholder="Add an item..." />
+					<Button type="submit">Add</Button>
+				</form>
 
-			{#if items.length > 0}
-				<div class="mt-4">
-					<h3 class="mb-2 text-lg font-medium">Current Items:</h3>
+				{#if items.length > 0}
 					<ul class="space-y-2">
-						{#each items as item}
-							<li>
-								<Card class="p-3">
-									<p class="text-sm">{item}</p>
+						{#each items as item (item)}
+							<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
+								<Card class="p-3 flex items-center justify-between gap-3">
+									<p class="text-sm flex-1">{item}</p>
+									<Button
+										onclick={() => removeItem(item)}
+										variant="ghost"
+										class="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+									>
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											width="16"
+											height="16"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path
+												d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+											/></svg
+										>
+										<span class="sr-only">Remove {item}</span>
+									</Button>
 								</Card>
 							</li>
 						{/each}
 					</ul>
-				</div>
-			{/if}
-
-			{#if items.length >= 2 && !currentComparison && !sortedItems.length}
-				<Button class="mt-4" onclick={startSorting}>Start Sorting</Button>
-			{/if}
+					<div class="flex justify-end">
+						<Button onclick={() => startSorting()} disabled={items.length < 2}>Start Sorting</Button>
+					</div>
+				{/if}
+			</div>
 		</Card>
 
 		<!-- Comparison Section -->
@@ -226,6 +257,7 @@
 						Copy List
 					</Button>
 				</div>
+
 				<form
 					class="mb-4 flex gap-2"
 					onsubmit={(e) => {
@@ -246,6 +278,27 @@
 							<Card class="p-3 flex items-center gap-3">
 								<span style="user-select: none" class="text-sm font-medium text-muted-foreground">{i + 1}.</span>
 								<p class="text-sm flex-1">{item}</p>
+								<Button
+									onclick={() => removeSortedItem(item)}
+									variant="ghost"
+									class="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path
+											d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
+										/></svg
+									>
+									<span class="sr-only">Remove {item}</span>
+								</Button>
 							</Card>
 						</li>
 					{/each}
