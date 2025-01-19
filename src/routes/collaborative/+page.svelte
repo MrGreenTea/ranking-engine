@@ -16,6 +16,7 @@
 
 	type Ranking = {
 		userId: string;
+		name: string;
 		items: string[];
 	};
 
@@ -37,8 +38,11 @@
 	let rankings = $state<Ranking[]>([]);
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
+	let newRankingName = $state('');
 	let sortBy = $state<SortBy>('median');
 	let validationError = $state<ValidationError | null>(null);
+	let editingNameId = $state<string | null>(null);
+	let editingNameValue = $state('');
 
 	const sortOptions: { value: SortBy; label: string }[] = [
 		{ value: 'median', label: 'Median Position' },
@@ -104,8 +108,9 @@
 		}
 
 		validationError = null;
-		rankings = [...rankings, { userId, items }];
+		rankings = [...rankings, { userId, name: newRankingName || `List ${rankings.length + 1}`, items }];
 		newRanking = '';
+		newRankingName = '';
 		userId = crypto.randomUUID();
 	}
 
@@ -140,6 +145,40 @@
 		validationError = null;
 		clearStorage(['collaborative-rankings', 'collaborative-sort-by']);
 	}
+
+	function startEditingName(ranking: Ranking) {
+		editingNameId = ranking.userId;
+		editingNameValue = ranking.name;
+	}
+
+	function saveEditingName() {
+		if (!editingNameId) return;
+		
+		rankings = rankings.map(ranking => 
+			ranking.userId === editingNameId 
+				? { ...ranking, name: editingNameValue.trim() || `List ${rankings.indexOf(ranking) + 1}` }
+				: ranking
+		);
+		
+		editingNameId = null;
+		editingNameValue = '';
+	}
+
+	function cancelEditingName() {
+		editingNameId = null;
+		editingNameValue = '';
+	}
+
+	function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		saveEditingName();
+	}
+
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.key === 'Escape') {
+			cancelEditingName();
+		}
+	}
 </script>
 
 <main class="container mx-auto max-w-4xl p-4">
@@ -152,6 +191,16 @@
 		<Card class="p-6">
 			<h2 class="mb-4 text-xl font-semibold">Add Your Ranking</h2>
 			<div class="space-y-4">
+				<div class="space-y-2">
+					<label for="ranking-name" class="text-sm font-medium">List Name (optional)</label>
+					<input
+						type="text"
+						id="ranking-name"
+						bind:value={newRankingName}
+						class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+						placeholder="My ranking list"
+					/>
+				</div>
 				<div class="space-y-2">
 					<label for="ranking" class="text-sm font-medium">
 						{#if rankings.length === 0}
@@ -254,13 +303,113 @@
 					{#each rankings as ranking (ranking.userId)}
 						<div class="relative space-y-2" transition:slide>
 							<div class="flex items-center justify-between">
-								<h3 class="font-medium">Ranking {rankings.indexOf(ranking) + 1}</h3>
+								<div>
+									{#if editingNameId === ranking.userId}
+										<form 
+											class="inline-flex items-center gap-2"
+											onsubmit={handleSubmit}
+										>
+											<input
+												type="text"
+												bind:value={editingNameValue}
+												class="rounded-md border border-input bg-background px-2 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+												placeholder="List name"
+												onkeydown={handleKeyDown}
+											/>
+											<div class="flex gap-1">
+												<Button 
+													type="submit"
+													variant="ghost" 
+													size="icon"
+													class="h-7 w-7"
+												>
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="16"
+														height="16"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														class="h-4 w-4"
+													>
+														<polyline points="20 6 9 17 4 12" />
+													</svg>
+												</Button>
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													class="h-7 w-7"
+													onclick={cancelEditingName}
+												>
+													<svg
+														xmlns="http://www.w3.org/2000/svg"
+														width="16"
+														height="16"
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														class="h-4 w-4"
+													>
+														<line x1="18" y1="6" x2="6" y2="18" />
+														<line x1="6" y1="6" x2="18" y2="18" />
+													</svg>
+												</Button>
+											</div>
+										</form>
+									{:else}
+										<button 
+											class="inline-flex items-center gap-1 hover:text-muted-foreground"
+											onclick={() => startEditingName(ranking)}
+										>
+											<span class="font-medium">{ranking.name}</span>
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="16"
+												height="16"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-3.5 w-3.5"
+											>
+												<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+												<path d="m15 5 4 4" />
+											</svg>
+										</button>
+										<span class="text-sm text-muted-foreground ml-2">({ranking.items.length} items)</span>
+									{/if}
+								</div>
 								<Button
 									onclick={() => removeRanking(ranking.userId)}
 									variant="ghost"
-									class="h-8 w-8 p-0"
+									size="icon"
+									class="h-8 w-8"
 								>
-									✕
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-4 w-4"
+									>
+										<path d="M3 6h18" />
+										<path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+										<path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+									</svg>
 								</Button>
 							</div>
 							<ol class="list-decimal pl-6">
