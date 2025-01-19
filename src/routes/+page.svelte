@@ -116,7 +116,12 @@
 </script>
 
 <main class="container mx-auto max-w-2xl p-4">
-	<h1 class="mb-8 text-3xl font-bold">Ranking Engine</h1>
+	<div class="mb-8">
+		<h1 class="text-3xl font-bold">Ranking Engine</h1>
+		<div class="mt-2">
+			<a href="/collaborative" class="text-blue-500 hover:underline">Try Collaborative Ranking</a>
+		</div>
+	</div>
 
 	<div class="space-y-8">
 		<!-- Add Items Section -->
