@@ -11,7 +11,7 @@
 	} from '$lib/components/ui/accordion';
 	import { slide } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
-	import { loadFromStorage, saveToStorage, clearStorage } from '$lib/utils/storage';
+	import { localStore } from '$lib/utils/storage.svelte';
 	import { onMount } from 'svelte';
 
 	type Ranking = {
@@ -35,11 +35,11 @@
 		extra: string[];
 	};
 
-	let rankings = $state<Ranking[]>([]);
+	let rankings = localStore<Ranking[]>('collaborative-rankings', []);
+	let sortBy = localStore<SortBy>('collaborative-sort-by', 'median');
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
 	let newRankingName = $state('');
-	let sortBy = $state<SortBy>('median');
 	let validationError = $state<ValidationError | null>(null);
 	let editingNameId = $state<string | null>(null);
 	let editingNameValue = $state('');
@@ -51,20 +51,10 @@
 		{ value: 'spread', label: 'Position Spread' }
 	];
 
-	onMount(() => {
-		rankings = loadFromStorage('collaborative-rankings', []);
-		sortBy = loadFromStorage('collaborative-sort-by', 'median');
-	});
-
-	$effect(() => {
-		saveToStorage('collaborative-rankings', rankings);
-		saveToStorage('collaborative-sort-by', sortBy);
-	});
-
 	function validateRanking(items: string[]): ValidationError | null {
-		if (rankings.length === 0) return null; // First ranking defines the set
+		if (rankings.value.length === 0) return null; // First ranking defines the set
 
-		const expectedItems = new Set(rankings[0].items);
+		const expectedItems = new Set(rankings.value[0].items);
 		const newItems = new Set(items);
 
 		const missing: string[] = [];
@@ -108,9 +98,9 @@
 		}
 
 		validationError = null;
-		rankings = [
-			...rankings,
-			{ userId, name: newRankingName || `List ${rankings.length + 1}`, items }
+		rankings.value = [
+			...rankings.value,
+			{ userId, name: newRankingName || `List ${rankings.value.length + 1}`, items }
 		];
 		newRanking = '';
 		newRankingName = '';
@@ -118,10 +108,10 @@
 	}
 
 	function calculateStats(): ItemStats[] {
-		if (rankings.length === 0) return [];
+		if (rankings.value.length === 0) return [];
 
-		const stats: ItemStats[] = rankings[0].items.map((item) => {
-			const positions = rankings.map((ranking) => ranking.items.indexOf(item) + 1);
+		const stats: ItemStats[] = rankings.value[0].items.map((item) => {
+			const positions = rankings.value.map((ranking) => ranking.items.indexOf(item) + 1);
 			const sorted = positions.sort((a, b) => a - b);
 			const mid = Math.floor(sorted.length / 2);
 			const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
@@ -135,18 +125,17 @@
 			};
 		});
 
-		return stats.sort((a, b) => a[sortBy] - b[sortBy]);
+		return stats.sort((a, b) => a[sortBy.value] - b[sortBy.value]);
 	}
 
 	function removeRanking(userId: string) {
-		rankings = rankings.filter((r) => r.userId !== userId);
+		rankings.value = rankings.value.filter((r) => r.userId !== userId);
 	}
 
 	function clearAll() {
-		rankings = [];
-		sortBy = 'median';
+		rankings.reset();
+		sortBy.reset();
 		validationError = null;
-		clearStorage(['collaborative-rankings', 'collaborative-sort-by']);
 	}
 
 	function startEditingName(ranking: Ranking) {
@@ -157,9 +146,12 @@
 	function saveEditingName() {
 		if (!editingNameId) return;
 
-		rankings = rankings.map((ranking) =>
+		rankings.value = rankings.value.map((ranking) =>
 			ranking.userId === editingNameId
-				? { ...ranking, name: editingNameValue.trim() || `List ${rankings.indexOf(ranking) + 1}` }
+				? {
+						...ranking,
+						name: editingNameValue.trim() || `List ${rankings.value.indexOf(ranking) + 1}`
+					}
 				: ranking
 		);
 
@@ -206,12 +198,12 @@
 				</div>
 				<div class="space-y-2">
 					<label for="ranking" class="text-sm font-medium">
-						{#if rankings.length === 0}
+						{#if rankings.value.length === 0}
 							Paste your ranked items (one per line) - This will define the item set
 						{:else}
 							Paste your ranked items (one per line) - Must match the original set:
 							<div class="mt-1 text-sm text-muted-foreground">
-								{rankings[0].items.join(', ')}
+								{rankings.value[0].items.join(', ')}
 							</div>
 						{/if}
 					</label>
@@ -237,13 +229,13 @@
 			</div>
 		</Card>
 
-		{#if rankings.length > 0}
+		{#if rankings.value.length > 0}
 			<Card class="p-6">
 				<div class="mb-6 space-y-4">
 					<h2 class="text-xl font-semibold">Combined Statistics</h2>
-					<Select type="single" bind:value={sortBy}>
+					<Select type="single" bind:value={sortBy.value}>
 						<SelectTrigger>
-							{sortOptions.find((opt) => opt.value === sortBy)?.label ?? 'Sort by'}
+							{sortOptions.find((opt) => opt.value === sortBy.value)?.label ?? 'Sort by'}
 						</SelectTrigger>
 						<SelectContent>
 							{#each sortOptions as option}
@@ -261,11 +253,11 @@
 										<div class="flex w-full items-center justify-between pr-4">
 											<span>{stat.item}</span>
 											<span class="text-sm font-medium">
-												{#if sortBy === 'median'}
+												{#if sortBy.value === 'median'}
 													Median: {stat.median.toFixed(1)}
-												{:else if sortBy === 'min'}
+												{:else if sortBy.value === 'min'}
 													Best: {stat.min}
-												{:else if sortBy === 'max'}
+												{:else if sortBy.value === 'max'}
 													Worst: {stat.max}
 												{:else}
 													Spread: {stat.spread}
@@ -303,7 +295,7 @@
 			<Card class="p-6 md:col-span-2">
 				<h2 class="mb-4 text-xl font-semibold">Individual Rankings</h2>
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{#each rankings as ranking (ranking.userId)}
+					{#each rankings.value as ranking (ranking.userId)}
 						<div class="relative space-y-2" transition:slide>
 							<div class="flex items-center justify-between">
 								<div>

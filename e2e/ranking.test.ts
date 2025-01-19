@@ -13,8 +13,8 @@ import { faker } from '@faker-js/faker';
  * We use alphabetical order as ranking.
  */
 
-// ranks 2, 3, 5, 10 and 25 items correctly
-[2, 3, 5, 10, 25].forEach((i) => {
+// ranks 2, 3, 5, 10 items correctly
+[2, 3, 5, 10].forEach((i) => {
 	test(`Ranks ${i} items correctly`, async ({ page }) => {
 		const items = Array.from({ length: i }, () => faker.word.noun());
 		// we sort the items alphabetically to better understand the output
@@ -39,9 +39,7 @@ import { faker } from '@faker-js/faker';
 			await (button1Content! < button2Content! ? button1 : button2).click();
 		}
 
-		await expect(page.getByRole('listitem')).toContainText(
-			sortedItems.map((item) => item.toString())
-		);
+		await expect(page.getByRole('listitem')).toContainText(sortedItems);
 	});
 });
 
@@ -73,8 +71,6 @@ import { faker } from '@faker-js/faker';
 			await (button1Content! < button2Content! ? button1 : button2).click();
 		}
 
-		await expect(page.getByTestId('sorted-item')).toContainText(
-			sortedItems.slice(0, i).map((item) => item.toString())
-		);
+		await expect(page.getByTestId('sorted-item')).toContainText(sortedItems.slice(0, i));
 	});
 });

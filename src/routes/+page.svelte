@@ -4,42 +4,31 @@
 	import { Card } from '$lib/components/ui/card';
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
-	import { loadFromStorage, saveToStorage, clearStorage } from '$lib/utils/storage';
+	import { localStore } from '$lib/utils/storage.svelte';
 	import { onMount } from 'svelte';
 	import Transition from '$lib/components/transitions.svelte';
 	import ComparisonButton from '$lib/components/comparison-button.svelte';
 
 	type Phase = 'create' | 'compare' | 'result';
 
-	let items = $state<string[]>([]);
+	let items = localStore<string[]>('ranking-items', []);
+	let sortedItems = localStore<string[]>('ranking-sorted-items', []);
+	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
+	let estimatedComparisons = localStore<number>('ranking-estimated-comparisons', 0);
 	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
 	let newItem = $state('');
-	let sortedItems = $state<string[]>([]);
 	let remainingItems = $state<string[]>([]);
 	let insertItem = $state('');
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 	let highlightedItem = $state<string | null>(null);
 	let phase = $state<Phase>('create');
 	let topK = $state<number | null>(null);
-	let comparisonsCount = $state(0);
-	let estimatedComparisons = $state(0);
 
 	onMount(() => {
-		items = loadFromStorage('ranking-items', []);
-		sortedItems = loadFromStorage('ranking-sorted-items', []);
-		comparisonsCount = loadFromStorage('ranking-comparisons-count', 0);
-		estimatedComparisons = loadFromStorage('ranking-estimated-comparisons', 0);
 		// If we have sorted items, go to result phase
-		if (sortedItems.length > 0) {
+		if (sortedItems.value.length > 0) {
 			phase = 'result';
 		}
-	});
-
-	$effect(() => {
-		saveToStorage('ranking-items', items);
-		saveToStorage('ranking-sorted-items', sortedItems);
-		saveToStorage('ranking-comparisons-count', comparisonsCount);
-		saveToStorage('ranking-estimated-comparisons', estimatedComparisons);
 	});
 
 	function estimateMergeSortComparisons(n: number): number {
@@ -66,29 +55,23 @@
 		});
 		currentComparison = null;
 		resolveCurrentComparison = null;
-		comparisonsCount++;
+		comparisonsCount.value++;
 		return choice === newItem;
 	}
 
 	function clearAll() {
-		items = [];
-		sortedItems = [];
-		remainingItems = [];
 		phase = 'create';
-		comparisonsCount = 0;
-		estimatedComparisons = 0;
-		clearStorage([
-			'ranking-items',
-			'ranking-sorted-items',
-			'ranking-comparisons-count',
-			'ranking-estimated-comparisons'
-		]);
+		items.reset();
+		sortedItems.reset();
+		remainingItems = [];
+		comparisonsCount.reset();
+		estimatedComparisons.reset();
 	}
 
 	function removeItem(item: string) {
-		items = items.filter((i) => i !== item);
-		if (sortedItems.includes(item)) {
-			sortedItems = sortedItems.filter((i) => i !== item);
+		items.value = items.value.filter((i) => i !== item);
+		if (sortedItems.value.includes(item)) {
+			sortedItems.value = sortedItems.value.filter((i) => i !== item);
 		}
 		if (remainingItems.includes(item)) {
 			remainingItems = remainingItems.filter((i) => i !== item);
@@ -96,12 +79,12 @@
 	}
 
 	function removeSortedItem(item: string) {
-		sortedItems = sortedItems.filter((i) => i !== item);
+		sortedItems.value = sortedItems.value.filter((i) => i !== item);
 	}
 
 	async function copyList() {
 		try {
-			await navigator.clipboard.writeText(sortedItems.join('\n'));
+			await navigator.clipboard.writeText(sortedItems.value.join('\n'));
 		} catch (err) {
 			console.error('Failed to copy list:', err);
 		}
@@ -109,7 +92,7 @@
 
 	function addItem() {
 		if (newItem.trim()) {
-			items = [...items, newItem.trim()];
+			items.value = [...items.value, newItem.trim()];
 			newItem = '';
 		}
 	}
@@ -169,11 +152,11 @@
 		return [heap, Array.from(remaining)];
 	}
 
-	async function binaryInsert(item: string, list: string[] = sortedItems): Promise<number> {
+	async function binaryInsert(item: string, list: string[] = sortedItems.value): Promise<number> {
 		if (!list.length) {
 			list.push(item);
-			if (list === sortedItems) {
-				sortedItems = list;
+			if (list === sortedItems.value) {
+				sortedItems.value = list;
 			}
 			return 0;
 		}
@@ -195,8 +178,8 @@
 
 		// Insert at the found position
 		currentList.splice(left, 0, item);
-		if (list === sortedItems) {
-			sortedItems = currentList;
+		if (list === sortedItems.value) {
+			sortedItems.value = currentList;
 		} else {
 			list.splice(0, list.length, ...currentList);
 		}
@@ -238,18 +221,18 @@
 	}
 
 	async function startSorting() {
-		if (items.length < 2) return;
+		if (items.value.length < 2) return;
 		phase = 'compare';
-		comparisonsCount = 0;
+		comparisonsCount.value = 0;
 
 		if (topK !== null && topK > 0) {
-			estimatedComparisons = estimateTopKComparisons(items.length, topK);
-			const [top, rest] = await findTopK([...items], topK);
-			sortedItems = top;
+			estimatedComparisons.value = estimateTopKComparisons(items.value.length, topK);
+			const [top, rest] = await findTopK([...items.value], topK);
+			sortedItems.value = top;
 			remainingItems = rest;
 		} else {
-			estimatedComparisons = estimateMergeSortComparisons(items.length);
-			sortedItems = await mergeSort([...items]);
+			estimatedComparisons.value = estimateMergeSortComparisons(items.value.length);
+			sortedItems.value = await mergeSort([...items.value]);
 			remainingItems = [];
 		}
 
@@ -261,7 +244,7 @@
 	}
 
 	async function insertNewItem() {
-		if (insertItem.trim() && sortedItems.length > 0) {
+		if (insertItem.trim() && sortedItems.value.length > 0) {
 			const item = insertItem.trim();
 			insertItem = '';
 			await binaryInsert(item);
@@ -307,14 +290,14 @@
 							<Button onclick={() => startSorting()}>Start Sorting</Button>
 						</div>
 
-						{#if items.length > 0}
+						{#if items.value.length > 0}
 							<div class="text-sm text-muted-foreground">
 								Estimated comparisons: {topK !== null && topK > 0
-									? estimateTopKComparisons(items.length, topK)
-									: estimateMergeSortComparisons(items.length)}
+									? estimateTopKComparisons(items.value.length, topK)
+									: estimateMergeSortComparisons(items.value.length)}
 							</div>
 							<ul class="space-y-2">
-								{#each items as item (item)}
+								{#each items.value as item (item)}
 									<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
 										<Card class="flex items-center justify-between gap-3 p-3">
 											<p class="flex-1 text-sm">{item}</p>
@@ -409,13 +392,13 @@
 							</Button>
 						</div>
 						<div class="space-y-1 text-sm text-muted-foreground">
-							<p>Actual comparisons: {comparisonsCount} / {estimatedComparisons}</p>
+							<p>Actual comparisons: {comparisonsCount.value} / {estimatedComparisons.value}</p>
 						</div>
 					</div>
 
 					<div class="space-y-4">
 						<ul class="space-y-2">
-							{#each sortedItems as item, i (item)}
+							{#each sortedItems.value as item, i (item)}
 								<li
 									animate:flip={{ duration: 300 }}
 									transition:fade={{ duration: 200 }}
