@@ -21,10 +21,14 @@
 	let highlightedItem = $state<string | null>(null);
 	let phase = $state<Phase>('create');
 	let topK = $state<number | null>(null);
+	let comparisonsCount = $state(0);
+	let estimatedComparisons = $state(0);
 
 	onMount(() => {
 		items = loadFromStorage('ranking-items', []);
 		sortedItems = loadFromStorage('ranking-sorted-items', []);
+		comparisonsCount = loadFromStorage('ranking-comparisons-count', 0);
+		estimatedComparisons = loadFromStorage('ranking-estimated-comparisons', 0);
 		// If we have sorted items, go to result phase
 		if (sortedItems.length > 0) {
 			phase = 'result';
@@ -34,14 +38,51 @@
 	$effect(() => {
 		saveToStorage('ranking-items', items);
 		saveToStorage('ranking-sorted-items', sortedItems);
+		saveToStorage('ranking-comparisons-count', comparisonsCount);
+		saveToStorage('ranking-estimated-comparisons', estimatedComparisons);
 	});
+
+	function estimateMergeSortComparisons(n: number): number {
+		if (n <= 1) return 0;
+		// Expected comparisons for merge sort is n * log2(n)
+		return Math.ceil(n * Math.log2(n));
+	}
+
+	function estimateTopKComparisons(n: number, k: number): number {
+		if (n <= k) return estimateMergeSortComparisons(n);
+		// For top-k:
+		// 1. First k items: k * log(k) for initial heap
+		// 2. Remaining n-k items: each needs 1 comparison with smallest + log(k) if larger
+		// We assume ~half of remaining items will be larger than smallest in heap
+		const initialHeapComparisons = k * Math.log2(k);
+		const remainingItemsComparisons = n - k + ((n - k) / 2) * Math.log2(k);
+		return Math.ceil(initialHeapComparisons + remainingItemsComparisons);
+	}
+
+	async function compareItems(newItem: string, existingItem: string): Promise<boolean> {
+		currentComparison = { item1: existingItem, item2: newItem };
+		const choice = await new Promise<string>((resolve) => {
+			resolveCurrentComparison = resolve;
+		});
+		currentComparison = null;
+		resolveCurrentComparison = null;
+		comparisonsCount++;
+		return choice === newItem;
+	}
 
 	function clearAll() {
 		items = [];
 		sortedItems = [];
 		remainingItems = [];
 		phase = 'create';
-		clearStorage(['ranking-items', 'ranking-sorted-items']);
+		comparisonsCount = 0;
+		estimatedComparisons = 0;
+		clearStorage([
+			'ranking-items',
+			'ranking-sorted-items',
+			'ranking-comparisons-count',
+			'ranking-estimated-comparisons'
+		]);
 	}
 
 	function removeItem(item: string) {
@@ -71,16 +112,6 @@
 			items = [...items, newItem.trim()];
 			newItem = '';
 		}
-	}
-
-	async function compareItems(newItem: string, existingItem: string): Promise<boolean> {
-		currentComparison = { item1: existingItem, item2: newItem };
-		const choice = await new Promise<string>((resolve) => {
-			resolveCurrentComparison = resolve;
-		});
-		currentComparison = null;
-		resolveCurrentComparison = null;
-		return choice === newItem;
 	}
 
 	async function findTopK(arr: string[], k: number): Promise<[string[], string[]]> {
@@ -209,12 +240,15 @@
 	async function startSorting() {
 		if (items.length < 2) return;
 		phase = 'compare';
+		comparisonsCount = 0;
 
 		if (topK !== null && topK > 0) {
+			estimatedComparisons = estimateTopKComparisons(items.length, topK);
 			const [top, rest] = await findTopK([...items], topK);
 			sortedItems = top;
 			remainingItems = rest;
 		} else {
+			estimatedComparisons = estimateMergeSortComparisons(items.length);
 			sortedItems = await mergeSort([...items]);
 			remainingItems = [];
 		}
@@ -274,6 +308,11 @@
 						</div>
 
 						{#if items.length > 0}
+							<div class="text-sm text-muted-foreground">
+								Estimated comparisons: {topK !== null && topK > 0
+									? estimateTopKComparisons(items.length, topK)
+									: estimateMergeSortComparisons(items.length)}
+							</div>
 							<ul class="space-y-2">
 								{#each items as item (item)}
 									<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
@@ -295,7 +334,7 @@
 													stroke-linecap="round"
 													stroke-linejoin="round"
 													><path d="M3 6h18" /><path
-														d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"
+														d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6a2 2 0 0 1 2-2h2"
 													/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg
 												>
 												<span class="sr-only">Remove {item}</span>
@@ -342,31 +381,36 @@
 			<!-- Phase 3: Show Results -->
 			<Transition show={phase === 'result'} key="result">
 				<Card class="p-6">
-					<div class="mb-4 flex items-center justify-between">
-						<h2 class="text-xl font-semibold">
-							{#if topK !== null && topK > 0}
-								Top {topK} Items
-							{:else}
-								Sorted List
-							{/if}
-						</h2>
-						<Button onclick={copyList} variant="outline" class="gap-2">
-							<svg
-								xmlns="http://www.w3.org/2000/svg"
-								width="24"
-								height="24"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path
-									d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
-								/></svg
-							>
-							Copy List
-						</Button>
+					<div class="mb-4 space-y-2">
+						<div class="flex items-center justify-between">
+							<h2 class="text-xl font-semibold">
+								{#if topK !== null && topK > 0}
+									Top {topK} Items
+								{:else}
+									Sorted List
+								{/if}
+							</h2>
+							<Button onclick={copyList} variant="outline" class="gap-2">
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									width="24"
+									height="24"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									><rect width="8" height="4" x="8" y="2" rx="1" ry="1" /><path
+										d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+									/></svg
+								>
+								Copy List
+							</Button>
+						</div>
+						<div class="space-y-1 text-sm text-muted-foreground">
+							<p>Actual comparisons: {comparisonsCount} / {estimatedComparisons}</p>
+						</div>
 					</div>
 
 					<div class="space-y-4">

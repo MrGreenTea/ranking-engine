@@ -2,7 +2,9 @@ type StorageKey =
 	| 'ranking-items'
 	| 'ranking-sorted-items'
 	| 'collaborative-rankings'
-	| 'collaborative-sort-by';
+	| 'collaborative-sort-by'
+	| 'ranking-comparisons-count'
+	| 'ranking-estimated-comparisons';
 
 export function loadFromStorage<T>(key: StorageKey, defaultValue: T): T {
 	if (typeof window === 'undefined') return defaultValue;
