@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
 	import { Card } from '$lib/components/ui/card';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { fade } from 'svelte/transition';
@@ -48,23 +47,24 @@
 		});
 
 		const stats: ItemStats[] = Array.from(uniqueItems).map((item) => {
-			const positions = rankings
+			const sorted = rankings
 				.map((ranking) => {
 					const index = ranking.items.indexOf(item);
-					return index === -1 ? ranking.items.length : index + 1;
-				})
-				.filter((pos) => pos > 0);
+					// add +1 to the index because humans expect 1-based indexing
+					return index === -1 ? uniqueItems.size + 1 : index + 1;
+				}).sort();
 
-			const sorted = [...positions].sort((a, b) => a - b);
 			const mid = Math.floor(sorted.length / 2);
 			const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+			const min = sorted[0];
+			const max = sorted[sorted.length - 1];
 
 			return {
 				item,
 				median,
-				min: Math.min(...positions),
-				max: Math.max(...positions),
-				spread: Math.max(...positions) - Math.min(...positions)
+				min,
+				max,
+				spread: max - min
 			};
 		});
 
