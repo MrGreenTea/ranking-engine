@@ -13,11 +13,11 @@
 
 	let items = localStore<string[]>('ranking-items', []);
 	let sortedItems = localStore<string[]>('ranking-sorted-items', []);
+	let remainingItems = localStore<string[]>('ranking-remaining-items', []);
 	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
 	let estimatedComparisons = localStore<number>('ranking-estimated-comparisons', 0);
 	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
 	let newItem = $state('');
-	let remainingItems = $state<string[]>([]);
 	let insertItem = $state('');
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 	let highlightedItem = $state<string | null>(null);
@@ -63,7 +63,7 @@
 		phase = 'create';
 		items.reset();
 		sortedItems.reset();
-		remainingItems = [];
+		remainingItems.reset();
 		comparisonsCount.reset();
 		estimatedComparisons.reset();
 	}
@@ -73,8 +73,8 @@
 		if (sortedItems.value.includes(item)) {
 			sortedItems.value = sortedItems.value.filter((i) => i !== item);
 		}
-		if (remainingItems.includes(item)) {
-			remainingItems = remainingItems.filter((i) => i !== item);
+		if (remainingItems.value.includes(item)) {
+			remainingItems.value = remainingItems.value.filter((i) => i !== item);
 		}
 	}
 
@@ -99,6 +99,7 @@
 
 	async function findTopK(arr: string[], k: number): Promise<[string[], string[]]> {
 		if (arr.length <= k) {
+			remainingItems.value = [];
 			return [await mergeSort(arr), []];
 		}
 
@@ -149,7 +150,9 @@
 			}
 		}
 
-		return [heap, Array.from(remaining)];
+		const remainingArray = Array.from(remaining);
+		remainingItems.value = remainingArray;
+		return [heap, remainingArray];
 	}
 
 	async function binaryInsert(item: string, list: string[] = sortedItems.value): Promise<number> {
@@ -229,11 +232,11 @@
 			estimatedComparisons.value = estimateTopKComparisons(items.value.length, topK);
 			const [top, rest] = await findTopK([...items.value], topK);
 			sortedItems.value = top;
-			remainingItems = rest;
+			remainingItems.value = rest;
 		} else {
 			estimatedComparisons.value = estimateMergeSortComparisons(items.value.length);
 			sortedItems.value = await mergeSort([...items.value]);
-			remainingItems = [];
+			remainingItems.value = [];
 		}
 
 		phase = 'result';
@@ -427,7 +430,7 @@
 							{/each}
 						</ul>
 
-						{#if remainingItems.length > 0}
+						{#if remainingItems.value.length > 0}
 							<div class="my-4 flex items-center gap-4">
 								<div class="h-px flex-1 bg-border"></div>
 								<p class="text-sm text-muted-foreground">Remaining Items</p>
@@ -435,7 +438,7 @@
 							</div>
 
 							<ul class="space-y-2">
-								{#each remainingItems as item (item)}
+								{#each remainingItems.value as item (item)}
 									<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
 										<Card class="flex items-center justify-between gap-3 bg-muted p-3">
 											<p class="flex-1 text-sm">{item}</p>

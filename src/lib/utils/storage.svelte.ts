@@ -3,6 +3,7 @@ import { browser } from '$app/environment';
 type StorageKey =
 	| 'ranking-items'
 	| 'ranking-sorted-items'
+	| 'ranking-remaining-items'
 	| 'collaborative-rankings'
 	| 'collaborative-sort-by'
 	| 'ranking-comparisons-count'
