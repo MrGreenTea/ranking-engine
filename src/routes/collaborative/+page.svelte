@@ -29,10 +29,16 @@
 
 	type SortBy = 'median' | 'min' | 'max' | 'spread';
 
+	type ValidationError = {
+		missing: string[];
+		extra: string[];
+	};
+
 	let rankings = $state<Ranking[]>([]);
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
 	let sortBy = $state<SortBy>('median');
+	let validationError = $state<ValidationError | null>(null);
 
 	const sortOptions: { value: SortBy; label: string }[] = [
 		{ value: 'median', label: 'Median Position' },
@@ -51,6 +57,36 @@
 		saveToStorage('collaborative-sort-by', sortBy);
 	});
 
+	function validateRanking(items: string[]): ValidationError | null {
+		if (rankings.length === 0) return null; // First ranking defines the set
+
+		const expectedItems = new Set(rankings[0].items);
+		const newItems = new Set(items);
+
+		const missing: string[] = [];
+		const extra: string[] = [];
+
+		// Find missing items
+		expectedItems.forEach((item) => {
+			if (!newItems.has(item)) {
+				missing.push(item);
+			}
+		});
+
+		// Find extra items
+		newItems.forEach((item) => {
+			if (!expectedItems.has(item)) {
+				extra.push(item);
+			}
+		});
+
+		if (missing.length > 0 || extra.length > 0) {
+			return { missing, extra };
+		}
+
+		return null;
+	}
+
 	function addRanking() {
 		if (!newRanking.trim()) return;
 
@@ -61,6 +97,13 @@
 
 		if (items.length === 0) return;
 
+		const error = validateRanking(items);
+		if (error) {
+			validationError = error;
+			return;
+		}
+
+		validationError = null;
 		rankings = [...rankings, { userId, items }];
 		newRanking = '';
 		userId = crypto.randomUUID();
@@ -69,30 +112,18 @@
 	function calculateStats(): ItemStats[] {
 		if (rankings.length === 0) return [];
 
-		const uniqueItems = new Set<string>();
-		rankings.forEach((ranking) => {
-			ranking.items.forEach((item) => uniqueItems.add(item));
-		});
-
-		const stats: ItemStats[] = Array.from(uniqueItems).map((item) => {
-			const sorted = rankings
-				.map((ranking) => {
-					const index = ranking.items.indexOf(item);
-					return index === -1 ? uniqueItems.size + 1 : index + 1;
-				})
-				.sort((a, b) => a - b);
-
+		const stats: ItemStats[] = rankings[0].items.map((item) => {
+			const positions = rankings.map((ranking) => ranking.items.indexOf(item) + 1);
+			const sorted = positions.sort((a, b) => a - b);
 			const mid = Math.floor(sorted.length / 2);
 			const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-			const min = sorted[0];
-			const max = sorted[sorted.length - 1];
 
 			return {
 				item,
 				median,
-				min,
-				max,
-				spread: max - min
+				min: sorted[0],
+				max: sorted[sorted.length - 1],
+				spread: sorted[sorted.length - 1] - sorted[0]
 			};
 		});
 
@@ -106,6 +137,7 @@
 	function clearAll() {
 		rankings = [];
 		sortBy = 'median';
+		validationError = null;
 		clearStorage(['collaborative-rankings', 'collaborative-sort-by']);
 	}
 </script>
@@ -122,7 +154,14 @@
 			<div class="space-y-4">
 				<div class="space-y-2">
 					<label for="ranking" class="text-sm font-medium">
-						Paste your ranked items (one per line)
+						{#if rankings.length === 0}
+							Paste your ranked items (one per line) - This will define the item set
+						{:else}
+							Paste your ranked items (one per line) - Must match the original set:
+							<div class="mt-1 text-sm text-muted-foreground">
+								{rankings[0].items.join(', ')}
+							</div>
+						{/if}
 					</label>
 					<Textarea
 						id="ranking"
@@ -130,6 +169,17 @@
 						rows={10}
 						placeholder="1. First item&#10;2. Second item&#10;3. Third item"
 					/>
+					{#if validationError}
+						<div class="rounded-md bg-destructive/15 p-3 text-sm text-destructive" transition:slide>
+							<strong>Invalid ranking:</strong>
+							{#if validationError.missing.length > 0}
+								<div>Missing items: {validationError.missing.join(', ')}</div>
+							{/if}
+							{#if validationError.extra.length > 0}
+								<div>Extra items: {validationError.extra.join(', ')}</div>
+							{/if}
+						</div>
+					{/if}
 				</div>
 				<Button onclick={addRanking} class="w-full">Add Ranking</Button>
 			</div>
