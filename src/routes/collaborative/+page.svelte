@@ -108,7 +108,10 @@
 		}
 
 		validationError = null;
-		rankings = [...rankings, { userId, name: newRankingName || `List ${rankings.length + 1}`, items }];
+		rankings = [
+			...rankings,
+			{ userId, name: newRankingName || `List ${rankings.length + 1}`, items }
+		];
 		newRanking = '';
 		newRankingName = '';
 		userId = crypto.randomUUID();
@@ -153,13 +156,13 @@
 
 	function saveEditingName() {
 		if (!editingNameId) return;
-		
-		rankings = rankings.map(ranking => 
-			ranking.userId === editingNameId 
+
+		rankings = rankings.map((ranking) =>
+			ranking.userId === editingNameId
 				? { ...ranking, name: editingNameValue.trim() || `List ${rankings.indexOf(ranking) + 1}` }
 				: ranking
 		);
-		
+
 		editingNameId = null;
 		editingNameValue = '';
 	}
@@ -305,10 +308,7 @@
 							<div class="flex items-center justify-between">
 								<div>
 									{#if editingNameId === ranking.userId}
-										<form 
-											class="inline-flex items-center gap-2"
-											onsubmit={handleSubmit}
-										>
+										<form class="inline-flex items-center gap-2" onsubmit={handleSubmit}>
 											<input
 												type="text"
 												bind:value={editingNameValue}
@@ -317,12 +317,7 @@
 												onkeydown={handleKeyDown}
 											/>
 											<div class="flex gap-1">
-												<Button 
-													type="submit"
-													variant="ghost" 
-													size="icon"
-													class="h-7 w-7"
-												>
+												<Button type="submit" variant="ghost" size="icon" class="h-7 w-7">
 													<svg
 														xmlns="http://www.w3.org/2000/svg"
 														width="16"
@@ -364,7 +359,7 @@
 											</div>
 										</form>
 									{:else}
-										<button 
+										<button
 											class="inline-flex items-center gap-1 hover:text-muted-foreground"
 											onclick={() => startEditingName(ranking)}
 										>
@@ -385,7 +380,9 @@
 												<path d="m15 5 4 4" />
 											</svg>
 										</button>
-										<span class="text-sm text-muted-foreground ml-2">({ranking.items.length} items)</span>
+										<span class="ml-2 text-sm text-muted-foreground"
+											>({ranking.items.length} items)</span
+										>
 									{/if}
 								</div>
 								<Button

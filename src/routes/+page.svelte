@@ -15,10 +15,12 @@
 	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
 	let newItem = $state('');
 	let sortedItems = $state<string[]>([]);
+	let remainingItems = $state<string[]>([]);
 	let insertItem = $state('');
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 	let highlightedItem = $state<string | null>(null);
 	let phase = $state<Phase>('create');
+	let topK = $state<number | null>(null);
 
 	onMount(() => {
 		items = loadFromStorage('ranking-items', []);
@@ -37,6 +39,7 @@
 	function clearAll() {
 		items = [];
 		sortedItems = [];
+		remainingItems = [];
 		phase = 'create';
 		clearStorage(['ranking-items', 'ranking-sorted-items']);
 	}
@@ -45,6 +48,9 @@
 		items = items.filter((i) => i !== item);
 		if (sortedItems.includes(item)) {
 			sortedItems = sortedItems.filter((i) => i !== item);
+		}
+		if (remainingItems.includes(item)) {
+			remainingItems = remainingItems.filter((i) => i !== item);
 		}
 	}
 
@@ -75,6 +81,95 @@
 		currentComparison = null;
 		resolveCurrentComparison = null;
 		return choice === newItem;
+	}
+
+	async function findTopK(arr: string[], k: number): Promise<[string[], string[]]> {
+		if (arr.length <= k) {
+			return [await mergeSort(arr), []];
+		}
+
+		// Initialize heap with first item
+		const heap = [arr[0]];
+		const remaining = new Set(arr);
+		remaining.delete(arr[0]);
+
+		// Build heap of size k by comparing each new item with all existing items
+		for (let i = 1; i < k; i++) {
+			let pos = 0;
+			const item = arr[i];
+			remaining.delete(item);
+
+			// Find position for new item by comparing with existing items
+			while (pos < heap.length) {
+				if (await compareItems(item, heap[pos])) {
+					break;
+				}
+				pos++;
+			}
+
+			heap.splice(pos, 0, item);
+		}
+
+		// Process remaining items
+		for (let i = k; i < arr.length; i++) {
+			// Compare with the smallest item in heap (which is at the end)
+			if (await compareItems(arr[i], heap[heap.length - 1])) {
+				// Add replaced item back to remaining
+				remaining.add(heap[heap.length - 1]);
+				// Remove smallest item (from end)
+				heap.pop();
+
+				// Find position for new item
+				let pos = 0;
+				const item = arr[i];
+				remaining.delete(item);
+
+				while (pos < heap.length) {
+					if (await compareItems(item, heap[pos])) {
+						break;
+					}
+					pos++;
+				}
+
+				heap.splice(pos, 0, item);
+			}
+		}
+
+		return [heap, Array.from(remaining)];
+	}
+
+	async function binaryInsert(item: string, list: string[] = sortedItems): Promise<number> {
+		if (!list.length) {
+			list.push(item);
+			if (list === sortedItems) {
+				sortedItems = list;
+			}
+			return 0;
+		}
+
+		let left = 0;
+		let right = list.length - 1;
+		const currentList = [...list];
+
+		while (left <= right) {
+			const mid = Math.floor((left + right) / 2);
+
+			// If the new item should come before the middle item
+			if (await compareItems(item, currentList[mid])) {
+				right = mid - 1;
+			} else {
+				left = mid + 1;
+			}
+		}
+
+		// Insert at the found position
+		currentList.splice(left, 0, item);
+		if (list === sortedItems) {
+			sortedItems = currentList;
+		} else {
+			list.splice(0, list.length, ...currentList);
+		}
+		return left;
 	}
 
 	async function mergeArrays(left: string[], right: string[]): Promise<string[]> {
@@ -114,39 +209,21 @@
 	async function startSorting() {
 		if (items.length < 2) return;
 		phase = 'compare';
-		sortedItems = await mergeSort([...items]);
+
+		if (topK !== null && topK > 0) {
+			const [top, rest] = await findTopK([...items], topK);
+			sortedItems = top;
+			remainingItems = rest;
+		} else {
+			sortedItems = await mergeSort([...items]);
+			remainingItems = [];
+		}
+
 		phase = 'result';
 	}
 
 	function choose(winner: string) {
 		resolveCurrentComparison?.(winner);
-	}
-
-	async function binaryInsert(item: string) {
-		if (!sortedItems.length) {
-			sortedItems = [item];
-			return 0;
-		}
-
-		let left = 0;
-		let right = sortedItems.length - 1;
-		const currentList = [...sortedItems];
-
-		while (left <= right) {
-			const mid = Math.floor((left + right) / 2);
-
-			// If the new item should come before the middle item
-			if (await compareItems(item, currentList[mid])) {
-				right = mid - 1;
-			} else {
-				left = mid + 1;
-			}
-		}
-
-		// Insert at the found position
-		currentList.splice(left, 0, item);
-		sortedItems = currentList;
-		return left;
 	}
 
 	async function insertNewItem() {
@@ -191,6 +268,11 @@
 							<Button type="submit">Add</Button>
 						</form>
 
+						<div class="flex items-center gap-2">
+							<Input type="number" min="1" placeholder="Top K items (optional)" bind:value={topK} />
+							<Button onclick={() => startSorting()}>Start Sorting</Button>
+						</div>
+
 						{#if items.length > 0}
 							<ul class="space-y-2">
 								{#each items as item (item)}
@@ -222,11 +304,6 @@
 									</li>
 								{/each}
 							</ul>
-							<div class="flex justify-end">
-								<Button onclick={() => startSorting()} disabled={items.length < 2}
-									>Start Sorting</Button
-								>
-							</div>
 						{/if}
 					</div>
 				</Card>
@@ -266,12 +343,18 @@
 			<Transition show={phase === 'result'} key="result">
 				<Card class="p-6">
 					<div class="mb-4 flex items-center justify-between">
-						<h2 class="text-xl font-semibold">Sorted List</h2>
+						<h2 class="text-xl font-semibold">
+							{#if topK !== null && topK > 0}
+								Top {topK} Items
+							{:else}
+								Sorted List
+							{/if}
+						</h2>
 						<Button onclick={copyList} variant="outline" class="gap-2">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
-								width="16"
-								height="16"
+								width="24"
+								height="24"
 								viewBox="0 0 24 24"
 								fill="none"
 								stroke="currentColor"
@@ -286,60 +369,68 @@
 						</Button>
 					</div>
 
-					<form
-						class="mb-4 flex gap-2"
-						onsubmit={(e) => {
-							e.preventDefault();
-							insertNewItem();
-						}}
-					>
-						<Input
-							type="text"
-							placeholder="Insert new item"
-							bind:value={insertItem}
-							class="flex-1"
-						/>
-						<Button type="submit">Insert</Button>
-					</form>
-					<ol class="space-y-2">
-						{#each sortedItems as item, i (item)}
-							<li
-								class={item === highlightedItem
-									? 'bg-primary/20 transition-colors duration-500'
-									: ''}
-								animate:flip={{ duration: 300 }}
-								transition:fade={{ duration: 200 }}
+					<div class="space-y-4">
+						<ul class="space-y-2">
+							{#each sortedItems as item, i (item)}
+								<li
+									animate:flip={{ duration: 300 }}
+									transition:fade={{ duration: 200 }}
+									class:highlight={item === highlightedItem}
+								>
+									<Card
+										class="flex items-center justify-between gap-3 p-3"
+										data-testid="sorted-item"
+									>
+										<p class="flex-1 text-sm">{item}</p>
+										<Button onclick={() => removeSortedItem(item)} variant="ghost" size="icon">
+											<svg
+												xmlns="http://www.w3.org/2000/svg"
+												width="24"
+												height="24"
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg
+											>
+										</Button>
+									</Card>
+								</li>
+							{/each}
+						</ul>
+
+						{#if remainingItems.length > 0}
+							<div class="my-4 flex items-center gap-4">
+								<div class="h-px flex-1 bg-border"></div>
+								<p class="text-sm text-muted-foreground">Remaining Items</p>
+								<div class="h-px flex-1 bg-border"></div>
+							</div>
+
+							<ul class="space-y-2">
+								{#each remainingItems as item (item)}
+									<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
+										<Card class="flex items-center justify-between gap-3 bg-muted p-3">
+											<p class="flex-1 text-sm">{item}</p>
+										</Card>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+
+						{#if phase === 'result'}
+							<form
+								class="flex gap-2"
+								onsubmit={(e) => {
+									e.preventDefault();
+									insertNewItem();
+								}}
 							>
-								<Card class="flex items-center gap-3 p-3">
-									<span style="user-select: none" class="text-sm font-medium text-muted-foreground"
-										>{i + 1}.</span
-									>
-									<p class="flex-1 text-sm">{item}</p>
-									<Button
-										onclick={() => removeSortedItem(item)}
-										variant="ghost"
-										class="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-									>
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											width="16"
-											height="16"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path
-												d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"
-											/></svg
-										>
-										<span class="sr-only">Remove {item}</span>
-									</Button>
-								</Card>
-							</li>
-						{/each}
-					</ol>
+								<Input bind:value={insertItem} placeholder="Insert new item..." />
+								<Button type="submit">Insert</Button>
+							</form>
+						{/if}
+					</div>
 				</Card>
 			</Transition>
 		</div>
