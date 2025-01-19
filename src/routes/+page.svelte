@@ -237,10 +237,9 @@
 				<Card class="p-6">
 					<h2 class="mb-4 text-xl font-semibold">Compare Items</h2>
 					<p class="mb-4 text-sm text-muted-foreground">Click on the item you prefer:</p>
-					<div class="grid gap-4 sm:grid-cols-2">
+					<div class="grid gap-4 sm:grid-cols-2" data-testid="comparison-buttons">
 						<ComparisonButton
 							item={currentComparison?.item1 ?? ''}
-							highlighted={highlightedItem === currentComparison?.item1}
 							onSelect={() => {
 								if (currentComparison) choose(currentComparison.item1);
 							}}
@@ -251,7 +250,6 @@
 						/>
 						<ComparisonButton
 							item={currentComparison?.item2 ?? ''}
-							highlighted={highlightedItem === currentComparison?.item2}
 							onSelect={() => {
 								if (currentComparison) choose(currentComparison.item2);
 							}}

@@ -3,7 +3,6 @@
 	import { cn } from '$lib/utils';
 
 	export let item: string;
-	export let highlighted = false;
 	export let onSelect: () => void;
 	export let onHighlight: () => void;
 	export let onUnhighlight: () => void;
@@ -11,7 +10,7 @@
 
 <Button
 	onclick={onSelect}
-	class={cn('h-32 text-lg', highlighted ? 'bg-muted' : '')}
+	class="h-32 text-lg"
 	onmouseenter={onHighlight}
 	onmouseleave={onUnhighlight}
 >
