@@ -11,6 +11,8 @@
 	} from '$lib/components/ui/accordion';
 	import { slide } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
+	import { loadFromStorage, saveToStorage, clearStorage } from '$lib/utils/storage';
+	import { onMount } from 'svelte';
 
 	type Ranking = {
 		userId: string;
@@ -38,6 +40,16 @@
 		{ value: 'max', label: 'Worst Position' },
 		{ value: 'spread', label: 'Position Spread' }
 	];
+
+	onMount(() => {
+		rankings = loadFromStorage('collaborative-rankings', []);
+		sortBy = loadFromStorage('collaborative-sort-by', 'median');
+	});
+
+	$effect(() => {
+		saveToStorage('collaborative-rankings', rankings);
+		saveToStorage('collaborative-sort-by', sortBy);
+	});
 
 	function addRanking() {
 		if (!newRanking.trim()) return;
@@ -90,10 +102,19 @@
 	function removeRanking(userId: string) {
 		rankings = rankings.filter((r) => r.userId !== userId);
 	}
+
+	function clearAll() {
+		rankings = [];
+		sortBy = 'median';
+		clearStorage(['collaborative-rankings', 'collaborative-sort-by']);
+	}
 </script>
 
 <main class="container mx-auto max-w-4xl p-4">
-	<h1 class="mb-8 text-3xl font-bold">Collaborative Ranking</h1>
+	<div class="mb-8 flex items-center justify-between">
+		<h1 class="text-3xl font-bold">Collaborative Ranking</h1>
+		<Button onclick={clearAll} variant="destructive">Clear All</Button>
+	</div>
 
 	<div class="grid gap-8 md:grid-cols-2">
 		<Card class="p-6">

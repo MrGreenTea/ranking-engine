@@ -4,6 +4,8 @@
 	import { Card } from '$lib/components/ui/card';
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
+	import { loadFromStorage, saveToStorage, clearStorage } from '$lib/utils/storage';
+	import { onMount } from 'svelte';
 
 	let items = $state<string[]>([]);
 	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
@@ -12,6 +14,16 @@
 	let insertItem = $state('');
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 	let highlightedItem = $state<string | null>(null);
+
+	onMount(() => {
+		items = loadFromStorage('ranking-items', []);
+		sortedItems = loadFromStorage('ranking-sorted-items', []);
+	});
+
+	$effect(() => {
+		saveToStorage('ranking-items', items);
+		saveToStorage('ranking-sorted-items', sortedItems);
+	});
 
 	function addItem() {
 		if (newItem.trim()) {
@@ -113,14 +125,23 @@
 	function choose(winner: string) {
 		resolveCurrentComparison?.(winner);
 	}
+
+	function clearAll() {
+		items = [];
+		sortedItems = [];
+		clearStorage(['ranking-items', 'ranking-sorted-items']);
+	}
 </script>
 
 <main class="container mx-auto max-w-2xl p-4">
-	<div class="mb-8">
-		<h1 class="text-3xl font-bold">Ranking Engine</h1>
-		<div class="mt-2">
-			<a href="/collaborative" class="text-blue-500 hover:underline">Try Collaborative Ranking</a>
+	<div class="mb-8 flex items-center justify-between">
+		<div>
+			<h1 class="text-3xl font-bold">Ranking Engine</h1>
+			<div class="mt-2">
+				<a href="/collaborative" class="text-blue-500 hover:underline">Try Collaborative Ranking</a>
+			</div>
 		</div>
+		<Button onclick={clearAll} variant="destructive">Clear All</Button>
 	</div>
 
 	<div class="space-y-8">
