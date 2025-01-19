@@ -17,9 +17,9 @@ function shuffle<T>(array: T[]) {
 }
 
 test('Ranks correctly', async ({ page }) => {
-    const sortedItems = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    const items = [...sortedItems];
-    shuffle(items);
+	const sortedItems = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+	const items = [...sortedItems];
+	shuffle(items);
 
 	await page.goto('/');
 
@@ -33,8 +33,8 @@ test('Ranks correctly', async ({ page }) => {
 	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
 		const button1 = await page.getByTestId('comparison-buttons').getByRole('button').first();
 		const button2 = await page.getByTestId('comparison-buttons').getByRole('button').last();
-        const button1Number = Number(await button1.textContent());
-        const button2Number = Number(await button2.textContent());
+		const button1Number = Number(await button1.textContent());
+		const button2Number = Number(await button2.textContent());
 
 		if (button1Number < button2Number) {
 			await button1.click();
@@ -43,5 +43,7 @@ test('Ranks correctly', async ({ page }) => {
 		}
 	}
 
-    await expect(page.getByRole('listitem')).toContainText(sortedItems.map((item) => item.toString()));
+	await expect(page.getByRole('listitem')).toContainText(
+		sortedItems.map((item) => item.toString())
+	);
 });
