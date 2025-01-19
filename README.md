@@ -1,38 +1,37 @@
-# sv
+# Ranking Engine
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A simple ranking engine built with SvelteKit and Tailwind CSS.
 
-## Creating a project
+## Features
 
-If you're seeing this, you've probably already done this step. Congrats!
+- Create a list of items
+- Compare items to rank them
+- Insert new items at a specific position
+- Delete items
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Why
 
-# create a new project in my-app
-npx sv create my-app
-```
+I love prioritizing items in a list. I wanted to create a simple ranking engine that I could use in my projects.
+Inspired by [Pubmeeple's ranking engine](https://www.pubmeeple.com/ranking-engine). With extra features:
 
-## Developing
+- Insert new items after sorting
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Optimized to reduce comparisons done by the user through:
 
-```bash
-npm run dev
+- using merge sort to sort the items
+- building a DAG (directed acyclic graph) of comparisons
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Demo
 
-## Building
+[Demo](https://ranking-engine.pages.dev/)
 
-To create a production version of your app:
+## How to use
 
-```bash
-npm run build
-```
+1. Clone the repository
+2. Run `pnpm install`
+3. Run `pnpm run dev`
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can preview the production build with `npm run preview`.
+## License
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+[MIT](LICENSE)
