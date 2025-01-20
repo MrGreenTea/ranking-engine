@@ -27,7 +27,6 @@ export async function findTopK<T>(
 	// Initialize heap by just sorting
 	const [initialHeap, remaining] = [arr.slice(0, k), arr.slice(k)];
 	let heap = await mergeSort(initialHeap, compareItems);
-	console.log('Starting heap', heap);
 
 	// Process remaining items
 	for (const currentItem of remaining) {
@@ -41,7 +40,6 @@ export async function findTopK<T>(
 			// removes last item in heap
 			heap = heap.slice(0, -1);
 			await binaryInsert(currentItem, heap, compareItems);
-			console.log('New heap', heap);
 		}
 	}
 
