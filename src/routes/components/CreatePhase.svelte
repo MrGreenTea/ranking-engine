@@ -16,6 +16,7 @@
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
 	import type { LocalStore } from '$lib/utils/storage.svelte';
+	import { Plus } from 'lucide-svelte';
 
 	let {
 		items = $bindable(),
@@ -56,57 +57,60 @@
 </script>
 
 <Card class="p-6">
-	<h2 class="mb-4 text-xl font-semibold">Items to Rank</h2>
-	<div class="mb-4 flex gap-2">
-		<Input
-			type="text"
-			placeholder="Add an item..."
-			bind:value={newItem}
-			onkeydown={(e) => e.key === 'Enter' && addItem()}
-		/>
-		<Button onclick={addItem}>Add</Button>
-		<Dialog bind:open={dialogOpen}>
-			<DialogTrigger>
-				<div
-					class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-				>
-					Import
-				</div>
-			</DialogTrigger>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Import Items</DialogTitle>
-				</DialogHeader>
-				<div class="space-y-4">
-					<Textarea
-						placeholder="Enter items, one per line"
-						bind:value={importText}
-						rows={10}
-						onkeydown={(e) => {
-							if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-								e.preventDefault();
-								importItems();
-							}
-						}}
-					/>
-					<Button onclick={importItems} class="w-full">Import Items</Button>
-				</div>
-			</DialogContent>
-		</Dialog>
+	<div class="mb-6 flex items-center justify-between">
+		<h2 class="text-xl font-semibold">Items to Rank</h2>
+		<div class="flex items-center gap-4">
+			<Input
+				type="number"
+				min="1"
+				placeholder="Top K items (optional)"
+				bind:value={topK}
+				class="w-48"
+			/>
+			<Dialog bind:open={dialogOpen}>
+				<DialogTrigger>
+					<div
+						class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+					>
+						Import
+					</div>
+				</DialogTrigger>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Import Items</DialogTitle>
+					</DialogHeader>
+					<div class="space-y-4">
+						<Textarea
+							placeholder="Enter items, one per line"
+							bind:value={importText}
+							rows={10}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+									e.preventDefault();
+									importItems();
+								}
+							}}
+						/>
+						<Button onclick={importItems} class="w-full">Import Items</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+		</div>
 	</div>
 
-	<div class="flex items-center gap-2">
-		<Input type="number" min="1" placeholder="Top K items (optional)" bind:value={topK} />
-		<Button disabled={items.value.length < 2} onclick={startSorting}>Start Sorting</Button>
+	<div class="mb-6 flex justify-center">
+		<Button disabled={items.value.length < 2} onclick={startSorting} class="w-48"
+			>Start Sorting</Button
+		>
 	</div>
 
 	{#if items.value.length > 0}
-		<div class="text-sm text-muted-foreground">
+		<div class="mb-4 text-sm text-muted-foreground">
 			Estimated comparisons: {topK !== null && topK > 0
 				? estimateTopKComparisons(items.value.length, topK)
 				: estimateMergeSortComparisons(items.value.length)}
 		</div>
-		<ul class="space-y-2">
+		<ul class="mb-4 space-y-2">
 			{#each items.value as item (item)}
 				<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
 					<Card class="flex items-center justify-between gap-3 p-3">
@@ -137,4 +141,16 @@
 			{/each}
 		</ul>
 	{/if}
+
+	<div class="flex gap-2">
+		<Input
+			type="text"
+			placeholder="Add an item..."
+			bind:value={newItem}
+			onkeydown={(e) => e.key === 'Enter' && addItem()}
+		/>
+		<Button disabled={!newItem} onclick={addItem} aria-label="Add">
+			<Plus class="h-4 w-4" />
+		</Button>
+	</div>
 </Card>
