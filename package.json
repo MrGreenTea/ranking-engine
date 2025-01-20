@@ -15,8 +15,8 @@
 		"lint:prettier": "prettier --check .",
 		"lint:eslint": "eslint .",
 		"test:e2e": "playwright test",
-		"test:unit": "vitest",
-		"test": "npm run test:e2e"
+		"test:unit": "vitest run",
+		"test": "pnpm run --no-bail -- /^test:/"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
