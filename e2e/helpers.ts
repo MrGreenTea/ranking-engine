@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { faker } from '@faker-js/faker';
 
 /*
@@ -17,6 +17,8 @@ export async function enterItems(page: Page, items: string[]) {
 	for (const item of items) {
 		await page.getByPlaceholder('Add an item').fill(item.toString());
 		await page.getByRole('button', { name: 'Add', exact: true }).click();
+		// also makes sure we wait for it to be added
+		await expect(page.getByRole('listitem').getByText(item, { exact: true })).toBeVisible();
 	}
 }
 
