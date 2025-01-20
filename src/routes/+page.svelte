@@ -7,11 +7,11 @@
 	import { localStore } from '$lib/utils/storage.svelte';
 	import { onMount } from 'svelte';
 	import Transition from '$lib/components/transitions.svelte';
-	import ComparisonButton from '$lib/components/comparison-button.svelte';
 	import { estimateMergeSortComparisons, mergeSort } from '$lib/sorting';
 	import { estimateTopKComparisons, findTopK } from '$lib/top-k-selection';
 	import { binaryInsert } from '$lib/binary-insert';
 	import CreatePhase from './components/CreatePhase.svelte';
+	import ComparePhase from './components/ComparePhase.svelte';
 
 	type Phase = 'create' | 'compare' | 'result';
 
@@ -126,32 +126,7 @@
 
 			<!-- Phase 2: Compare Items -->
 			<Transition show={phase === 'compare' && currentComparison !== null} key="compare">
-				<Card class="p-6">
-					<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
-					<p class="mb-4 text-sm text-muted-foreground">Click on the item you prefer:</p>
-					<div class="grid gap-4 sm:grid-cols-2" data-testid="comparison-buttons">
-						<ComparisonButton
-							item={currentComparison?.item1 ?? ''}
-							onSelect={() => {
-								if (currentComparison) choose(currentComparison.item1);
-							}}
-							onHighlight={() => {
-								if (currentComparison) highlightedItem = currentComparison.item1;
-							}}
-							onUnhighlight={() => (highlightedItem = null)}
-						/>
-						<ComparisonButton
-							item={currentComparison?.item2 ?? ''}
-							onSelect={() => {
-								if (currentComparison) choose(currentComparison.item2);
-							}}
-							onHighlight={() => {
-								if (currentComparison) highlightedItem = currentComparison.item2;
-							}}
-							onUnhighlight={() => (highlightedItem = null)}
-						/>
-					</div>
-				</Card>
+				<ComparePhase {currentComparison} {choose} />
 			</Transition>
 
 			<!-- Phase 3: Show Results -->
