@@ -21,6 +21,8 @@
 	let phase = $state<Phase>('create');
 	let topK = $state<number | null>(null);
 
+	let comparisonCache = new Map<string, string[]>();
+
 	onMount(() => {
 		// If we have sorted items, go to result phase
 		if (sortedItems.value.length > 0) {
@@ -28,7 +30,28 @@
 		}
 	});
 
+	// Transitive closure of comparison
+	// if a < c and c < b, then a < b
+	// same with b < c and c < a then b < a
+	function transitiveComparison(a: string, b: string): number | undefined {
+		// Direct check in cache
+		let cacheA = comparisonCache.get(a);
+		if (cacheA?.includes(b)) return -1;
+
+		let cacheB = comparisonCache.get(b);
+		if (cacheB?.includes(a)) return 1;
+
+		return undefined;
+	}
+
 	async function compareItems(a: string, b: string): Promise<number> {
+		const cached = transitiveComparison(a, b);
+		if (cached !== undefined) {
+			console.log('Using cached comparison', cached, 'for pair', a, 'and', b);
+			console.debug(comparisonCache);
+			return cached;
+		}
+
 		currentComparison = { item1: a, item2: b };
 		const choice = await new Promise<string>((resolve) => {
 			resolveCurrentComparison = resolve;
@@ -36,7 +59,15 @@
 		currentComparison = null;
 		resolveCurrentComparison = null;
 		comparisonsCount.value++;
-		return choice === a ? -1 : 1;
+		if (choice === a) {
+			const cacheA = comparisonCache.get(a) ?? [];
+			comparisonCache.set(a, [...cacheA, b]);
+			return -1;
+		} else {
+			const cacheB = comparisonCache.get(b) ?? [];
+			comparisonCache.set(b, [...cacheB, a]);
+			return 1;
+		}
 	}
 
 	function clearAll() {
@@ -46,6 +77,7 @@
 		remainingItems.reset();
 		comparisonsCount.reset();
 		estimatedComparisons.reset();
+		comparisonCache.clear();
 	}
 
 	async function startSorting() {

@@ -56,6 +56,82 @@ test.describe.configure({ mode: 'parallel' });
 	});
 });
 
+test('Never ask the same comparison twice', async ({ page }) => {
+	const items = randomItemList(5);
+
+	await page.goto('/');
+
+	// enter randomized items
+	await enterItems(page, items);
+
+	const seenPairs: [string, string][] = [];
+
+	await page.getByRole('button', { name: 'Start Sorting' }).click();
+
+	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
+		const buttonTexts = await page
+			.getByTestId('comparison-buttons')
+			.getByRole('button')
+			.allInnerTexts();
+
+		const [button1, button2] = await page
+			.getByTestId('comparison-buttons')
+			.getByRole('button')
+			.all();
+
+		const [button1Content, button2Content] = buttonTexts.map((t) => t.trim());
+
+		const pair = buttonTexts.sort() as [string, string];
+		expect(seenPairs).not.toContainEqual(pair);
+		seenPairs.push(pair);
+		console.log(seenPairs);
+
+		await (button1Content! < button2Content! ? button1 : button2).click();
+	}
+});
+
+/* reproduces a bug where the same comparison is asked twice.
+	It depends on the very specific order of the items.
+	Therefore we have this special ranking array that gives the expected order.
+*/
+test('Never ask the same comparison twice (top-k)', async ({ page }) => {
+	const items = randomItemList(4);
+	const ranking = [items[2], items[0], items[3], items[1], ...items.slice(4)];
+	console.log({ input: items, expected: ranking });
+	await page.goto('/');
+
+	// enter randomized items
+	await enterItems(page, items);
+
+	const seenPairs: [string, string][] = [];
+
+	await page.getByPlaceholder('Top K items (optional)').fill('3');
+	await page.getByRole('button', { name: 'Start Sorting' }).click();
+
+	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
+		const buttonTexts = await page
+			.getByTestId('comparison-buttons')
+			.getByRole('button')
+			.allInnerTexts();
+
+		const [button1, button2] = await page
+			.getByTestId('comparison-buttons')
+			.getByRole('button')
+			.all();
+
+		const [button1Content, button2Content] = buttonTexts.map((t) => t.trim());
+
+		const pair = buttonTexts.sort() as [string, string];
+		expect(seenPairs).not.toContainEqual(pair);
+		seenPairs.push(pair);
+		console.log(seenPairs);
+
+		const button1Index = ranking.indexOf(button1Content!);
+		const button2Index = ranking.indexOf(button2Content!);
+		await (button1Index < button2Index ? button1 : button2).click();
+	}
+});
+
 /* Reproduce a bug where adding items would not deduplicate them before sorting. */
 [
 	['b', 'a', 'b'],
