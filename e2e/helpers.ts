@@ -15,8 +15,8 @@ export function randomItemList(length: number) {
 
 export async function enterItems(page: Page, items: string[]) {
 	for (const item of items) {
-		await page.getByPlaceholder('Add an item...').fill(item.toString());
-		await page.getByRole('button', { name: 'Add' }).click();
+		await page.getByPlaceholder('Add an item').fill(item.toString());
+		await page.getByRole('button', { name: 'Add', exact: true }).click();
 	}
 }
 
@@ -27,10 +27,14 @@ export async function enterItems(page: Page, items: string[]) {
  */
 export async function sortItems(page: Page) {
 	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-		const button1 = await page.getByTestId('comparison-buttons').getByRole('button').first();
-		const button2 = await page.getByTestId('comparison-buttons').getByRole('button').last();
-		const button1Content = await button1.textContent();
-		const button2Content = await button2.textContent();
+		const [button1, button2] = await page
+			.getByTestId('comparison-buttons')
+			.getByRole('button')
+			.all();
+		const [button1Content, button2Content] = await Promise.all([
+			button1.innerText(),
+			button2.innerText()
+		]);
 
 		await (button1Content! < button2Content! ? button1 : button2).click();
 	}
