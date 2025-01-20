@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Card } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import { onMount } from 'svelte';
 
 	let {
 		currentComparison,
@@ -9,6 +10,21 @@
 		currentComparison: { item1: string; item2: string };
 		choose: (item: string) => void;
 	} = $props();
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'ArrowLeft') {
+			choose(currentComparison.item1);
+		} else if (event.key === 'ArrowRight') {
+			choose(currentComparison.item2);
+		}
+	}
+
+	onMount(() => {
+		window.addEventListener('keydown', handleKeydown);
+		return () => {
+			window.removeEventListener('keydown', handleKeydown);
+		};
+	});
 </script>
 
 <Card class="p-6">
