@@ -101,8 +101,9 @@
 	}
 
 	function addItem() {
-		if (newItem.trim()) {
-			items.value = [...items.value, newItem.trim()];
+		const trimmedItem = newItem.trim();
+		if (trimmedItem && !items.value.includes(trimmedItem)) {
+			items.value = [...items.value, trimmedItem];
 			newItem = '';
 		}
 	}
@@ -111,7 +112,7 @@
 		const newItems = importText
 			.split('\n')
 			.map((item) => item.trim())
-			.filter((item) => item.length > 0);
+			.filter((item) => item.length > 0 && !items.value.includes(item));
 
 		items.value = [...items.value, ...newItems];
 		importText = '';
