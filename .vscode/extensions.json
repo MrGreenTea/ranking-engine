@@ -3,6 +3,7 @@
 		"esbenp.prettier-vscode",
 		"svelte.svelte-vscode",
 		"dbaeumer.vscode-eslint",
-		"vitest.explorer"
+		"vitest.explorer",
+		"ms-playwright.playwright"
 	]
 }
