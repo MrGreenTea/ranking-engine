@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { WithElementRef } from 'bits-ui';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -13,7 +12,7 @@
 
 <div
 	bind:this={ref}
-	class={cn('rounded-lg border bg-card text-card-foreground shadow-sm', className)}
+	class={['rounded-lg border bg-card text-card-foreground shadow-sm', className]}
 	{...restProps}
 >
 	{@render children?.()}

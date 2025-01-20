@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Check from 'lucide-svelte/icons/check';
 	import { Select as SelectPrimitive, type WithoutChild } from 'bits-ui';
-	import { cn } from '$lib/utils.js';
 
 	let {
 		ref = $bindable(null),
@@ -16,10 +15,10 @@
 <SelectPrimitive.Item
 	bind:ref
 	{value}
-	class={cn(
+	class={[
 		'relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none data-[disabled]:pointer-events-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground data-[disabled]:opacity-50',
 		className
-	)}
+	]}
 	{...restProps}
 >
 	{#snippet children({ selected, highlighted })}

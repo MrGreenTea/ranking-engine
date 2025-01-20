@@ -25,6 +25,7 @@ export async function enterItems(page: Page, items: string[]) {
  * if sortedItems is provided the final order will be that.
  * Otherwise the order will be alphabetical
  */
+
 export async function sortItems(page: Page) {
 	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
 		const [button1, button2] = await page
