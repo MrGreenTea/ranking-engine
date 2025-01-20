@@ -57,7 +57,8 @@ test.describe.configure({ mode: 'parallel' });
 });
 
 test('Never ask the same comparison twice', async ({ page }) => {
-	const items = randomItemList(5);
+	const items = randomItemList(4);
+	const ranking = [items[2], items[0], items[3], items[1]];
 
 	await page.goto('/');
 
@@ -68,26 +69,14 @@ test('Never ask the same comparison twice', async ({ page }) => {
 
 	await page.getByRole('button', { name: 'Start Sorting' }).click();
 
-	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-		const buttonTexts = await page
-			.getByTestId('comparison-buttons')
-			.getByRole('button')
-			.allInnerTexts();
-
-		const [button1, button2] = await page
-			.getByTestId('comparison-buttons')
-			.getByRole('button')
-			.all();
-
-		const [button1Content, button2Content] = buttonTexts.map((t) => t.trim());
-
-		const pair = buttonTexts.sort() as [string, string];
-		expect(seenPairs).not.toContainEqual(pair);
-		seenPairs.push(pair);
-		console.log(seenPairs);
-
-		await (button1Content! < button2Content! ? button1 : button2).click();
-	}
+	await sortItems(page, {
+		key: (item: string) => ranking.indexOf(item),
+		beforeComparison: (i1, i2) => {
+			const pair = [i1, i2].sort() as [string, string];
+			expect(seenPairs).not.toContainEqual(pair);
+			seenPairs.push(pair);
+		}
+	});
 });
 
 /* reproduces a bug where the same comparison is asked twice.
@@ -96,8 +85,7 @@ test('Never ask the same comparison twice', async ({ page }) => {
 */
 test('Never ask the same comparison twice (top-k)', async ({ page }) => {
 	const items = randomItemList(4);
-	const ranking = [items[2], items[0], items[3], items[1], ...items.slice(4)];
-	console.log({ input: items, expected: ranking });
+	const ranking = [items[2], items[0], items[3], items[1]];
 	await page.goto('/');
 
 	// enter randomized items
@@ -108,28 +96,14 @@ test('Never ask the same comparison twice (top-k)', async ({ page }) => {
 	await page.getByPlaceholder('Top K items (optional)').fill('3');
 	await page.getByRole('button', { name: 'Start Sorting' }).click();
 
-	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-		const buttonTexts = await page
-			.getByTestId('comparison-buttons')
-			.getByRole('button')
-			.allInnerTexts();
-
-		const [button1, button2] = await page
-			.getByTestId('comparison-buttons')
-			.getByRole('button')
-			.all();
-
-		const [button1Content, button2Content] = buttonTexts.map((t) => t.trim());
-
-		const pair = buttonTexts.sort() as [string, string];
-		expect(seenPairs).not.toContainEqual(pair);
-		seenPairs.push(pair);
-		console.log(seenPairs);
-
-		const button1Index = ranking.indexOf(button1Content!);
-		const button2Index = ranking.indexOf(button2Content!);
-		await (button1Index < button2Index ? button1 : button2).click();
-	}
+	await sortItems(page, {
+		key: (item: string) => ranking.indexOf(item),
+		beforeComparison: (i1, i2) => {
+			const pair = [i1, i2].sort() as [string, string];
+			expect(seenPairs).not.toContainEqual(pair);
+			seenPairs.push(pair);
+		}
+	});
 });
 
 /* Reproduce a bug where adding items would not deduplicate them before sorting. */
@@ -150,20 +124,11 @@ test('Never ask the same comparison twice (top-k)', async ({ page }) => {
 
 		await page.getByRole('button', { name: 'Start Sorting' }).click();
 
-		while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-			const button1 = await page.getByTestId('comparison-buttons').getByRole('button').first();
-			const button2 = await page.getByTestId('comparison-buttons').getByRole('button').last();
-			const button1Content = await button1.textContent();
-			const button2Content = await button2.textContent();
-
-			expect(button1Content).not.toEqual(button2Content);
-
-			if (button1Content! < button2Content!) {
-				await button1.click();
-			} else {
-				await button2.click();
+		await sortItems(page, {
+			beforeComparison: (button1Content, button2Content) => {
+				expect(button1Content).not.toEqual(button2Content);
 			}
-		}
+		});
 
 		// deduplicated and sorted
 		const sortedItems = [...deuplicatedItems].sort();

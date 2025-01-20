@@ -20,5 +20,5 @@ test('Add item after sorting', async ({ page }) => {
 	await sortItems(page);
 
 	const sortedItems = [...items, newItem].sort();
-	await expect(page.getByRole('listitem')).toContainText([...sortedItems]);
+	await expect(page.getByRole('listitem')).toContainText(sortedItems);
 });
