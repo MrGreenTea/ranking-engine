@@ -16,6 +16,9 @@
 	import { onMount } from 'svelte';
 	import Transition from '$lib/components/transitions.svelte';
 	import ComparisonButton from '$lib/components/comparison-button.svelte';
+	import { estimateMergeSortComparisons, mergeSort } from '$lib/sorting';
+	import { estimateTopKComparisons, findTopK } from '$lib/top-k-selection';
+	import { binaryInsert } from '$lib/binary-insert';
 
 	type Phase = 'create' | 'compare' | 'result';
 
@@ -41,32 +44,15 @@
 		}
 	});
 
-	function estimateMergeSortComparisons(n: number): number {
-		if (n <= 1) return 0;
-		// Expected comparisons for merge sort is n * log2(n)
-		return Math.ceil(n * Math.log2(n));
-	}
-
-	function estimateTopKComparisons(n: number, k: number): number {
-		if (n <= k) return estimateMergeSortComparisons(n);
-		// For top-k:
-		// 1. First k items: k * log(k) for initial heap
-		// 2. Remaining n-k items: each needs 1 comparison with smallest + log(k) if larger
-		// We assume ~half of remaining items will be larger than smallest in heap
-		const initialHeapComparisons = k * Math.log2(k);
-		const remainingItemsComparisons = n - k + ((n - k) / 2) * Math.log2(k);
-		return Math.ceil(initialHeapComparisons + remainingItemsComparisons);
-	}
-
-	async function compareItems(newItem: string, existingItem: string): Promise<boolean> {
-		currentComparison = { item1: existingItem, item2: newItem };
+	async function compareItems(a: string, b: string): Promise<number> {
+		currentComparison = { item1: a, item2: b };
 		const choice = await new Promise<string>((resolve) => {
 			resolveCurrentComparison = resolve;
 		});
 		currentComparison = null;
 		resolveCurrentComparison = null;
 		comparisonsCount.value++;
-		return choice === newItem;
+		return choice === a ? -1 : 1;
 	}
 
 	function clearAll() {
@@ -119,128 +105,6 @@
 		dialogOpen = false;
 	}
 
-	async function findTopK(arr: string[], k: number): Promise<[string[], string[]]> {
-		if (arr.length <= k) {
-			remainingItems.value = [];
-			return [await mergeSort(arr), []];
-		}
-
-		// Initialize heap with first item
-		const heap = [arr[0]];
-		const remaining = new Set(arr);
-		remaining.delete(arr[0]);
-
-		// Build heap of size k by comparing each new item with all existing items
-		for (let i = 1; i < k; i++) {
-			let pos = 0;
-			const item = arr[i];
-			remaining.delete(item);
-
-			// Find position for new item by comparing with existing items
-			while (pos < heap.length) {
-				if (await compareItems(item, heap[pos])) {
-					break;
-				}
-				pos++;
-			}
-
-			heap.splice(pos, 0, item);
-		}
-
-		// Process remaining items
-		for (let i = k; i < arr.length; i++) {
-			// Compare with the smallest item in heap (which is at the end)
-			if (await compareItems(arr[i], heap[heap.length - 1])) {
-				// Add replaced item back to remaining
-				remaining.add(heap[heap.length - 1]);
-				// Remove smallest item (from end)
-				heap.pop();
-
-				// Find position for new item
-				let pos = 0;
-				const item = arr[i];
-				remaining.delete(item);
-
-				while (pos < heap.length) {
-					if (await compareItems(item, heap[pos])) {
-						break;
-					}
-					pos++;
-				}
-
-				heap.splice(pos, 0, item);
-			}
-		}
-
-		const remainingArray = Array.from(remaining);
-		remainingItems.value = remainingArray;
-		return [heap, remainingArray];
-	}
-
-	async function binaryInsert(item: string, list: string[] = sortedItems.value): Promise<number> {
-		if (!list.length) {
-			list.push(item);
-			if (list === sortedItems.value) {
-				sortedItems.value = list;
-			}
-			return 0;
-		}
-
-		let left = 0;
-		let right = list.length - 1;
-		const currentList = [...list];
-
-		while (left <= right) {
-			const mid = Math.floor((left + right) / 2);
-
-			// If the new item should come before the middle item
-			if (await compareItems(item, currentList[mid])) {
-				right = mid - 1;
-			} else {
-				left = mid + 1;
-			}
-		}
-
-		// Insert at the found position
-		currentList.splice(left, 0, item);
-		sortedItems.value = currentList;
-		return left;
-	}
-
-	async function mergeArrays(left: string[], right: string[]): Promise<string[]> {
-		const result: string[] = [];
-		let leftIndex = 0;
-		let rightIndex = 0;
-
-		while (leftIndex < left.length && rightIndex < right.length) {
-			const item1 = left[leftIndex];
-			const item2 = right[rightIndex];
-
-			if (await compareItems(item2, item1)) {
-				result.push(item2);
-				rightIndex++;
-			} else {
-				result.push(item1);
-				leftIndex++;
-			}
-		}
-
-		return [...result, ...left.slice(leftIndex), ...right.slice(rightIndex)];
-	}
-
-	async function mergeSort(arr: string[]): Promise<string[]> {
-		if (arr.length <= 1) return arr;
-
-		const mid = Math.floor(arr.length / 2);
-		const left = arr.slice(0, mid);
-		const right = arr.slice(mid);
-
-		const sortedLeft = await mergeSort(left);
-		const sortedRight = await mergeSort(right);
-
-		return mergeArrays(sortedLeft, sortedRight);
-	}
-
 	async function startSorting() {
 		if (items.value.length < 2) return;
 		phase = 'compare';
@@ -248,12 +112,12 @@
 
 		if (topK !== null && topK > 0) {
 			estimatedComparisons.value = estimateTopKComparisons(items.value.length, topK);
-			const [top, rest] = await findTopK([...items.value], topK);
+			const [top, rest] = await findTopK([...items.value], topK, compareItems);
 			sortedItems.value = top;
 			remainingItems.value = rest;
 		} else {
 			estimatedComparisons.value = estimateMergeSortComparisons(items.value.length);
-			sortedItems.value = await mergeSort([...items.value]);
+			sortedItems.value = await mergeSort([...items.value], compareItems);
 			remainingItems.value = [];
 		}
 
@@ -269,7 +133,7 @@
 		if (trimmedItem && !sortedItems.value.includes(trimmedItem)) {
 			const currentPhase = phase;
 			phase = 'compare';
-			await binaryInsert(trimmedItem);
+			await binaryInsert(trimmedItem, sortedItems.value, compareItems);
 			phase = currentPhase;
 			insertItem = '';
 			// Briefly highlight the newly inserted item
@@ -338,7 +202,7 @@
 
 					<div class="flex items-center gap-2">
 						<Input type="number" min="1" placeholder="Top K items (optional)" bind:value={topK} />
-						<Button onclick={() => startSorting()}>Start Sorting</Button>
+						<Button disabled={items.value.length < 2} onclick={startSorting}>Start Sorting</Button>
 					</div>
 
 					{#if items.value.length > 0}
