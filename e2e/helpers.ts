@@ -28,17 +28,36 @@ export async function enterItems(page: Page, items: string[]) {
  * Otherwise the order will be alphabetical
  */
 
-export async function sortItems(page: Page) {
+export async function sortItems(
+	page: Page,
+	{
+		key = (item: string) => item,
+		beforeClick = () => {},
+		beforeComparison = () => {}
+	}: {
+		key?: (item: string) => string | number;
+		beforeClick?: (choice: string) => void;
+		beforeComparison?: (item1: string, item2: string) => void;
+	} = {}
+) {
 	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-		const [button1, button2] = await page
+		const [button1Content, button2Content] = await page
 			.getByTestId('comparison-buttons')
 			.getByRole('button')
-			.all();
-		const [button1Content, button2Content] = await Promise.all([
-			button1.innerText(),
-			button2.innerText()
-		]);
+			.allInnerTexts();
 
-		await (button1Content! < button2Content! ? button1 : button2).click();
+		// if one of the buttons is not visible, we are done
+		if (button1Content == null || button2Content == null) {
+			break;
+		}
+
+		beforeComparison(button1Content, button2Content);
+		if (key(button1Content!) < key(button2Content!)) {
+			beforeClick(button1Content);
+			await page.getByTestId('comparison-buttons').getByRole('button').first().click();
+		} else {
+			beforeClick(button2Content);
+			await page.getByTestId('comparison-buttons').getByRole('button').last().click();
+		}
 	}
 }
