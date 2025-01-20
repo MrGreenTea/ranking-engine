@@ -203,11 +203,7 @@
 
 		// Insert at the found position
 		currentList.splice(left, 0, item);
-		if (list === sortedItems.value) {
-			sortedItems.value = currentList;
-		} else {
-			list.splice(0, list.length, ...currentList);
-		}
+		sortedItems.value = currentList;
 		return left;
 	}
 
@@ -269,14 +265,18 @@
 	}
 
 	async function insertNewItem() {
-		if (insertItem.trim() && sortedItems.value.length > 0) {
-			const item = insertItem.trim();
+		const trimmedItem = insertItem.trim();
+		if (trimmedItem && !sortedItems.value.includes(trimmedItem)) {
+			const currentPhase = phase;
+			phase = 'compare';
+			await binaryInsert(trimmedItem);
+			phase = currentPhase;
 			insertItem = '';
-			await binaryInsert(item);
-			highlightedItem = item;
+			// Briefly highlight the newly inserted item
+			highlightedItem = trimmedItem;
 			setTimeout(() => {
 				highlightedItem = null;
-			}, 2000);
+			}, 1000);
 		}
 	}
 </script>
@@ -384,7 +384,7 @@
 			<!-- Phase 2: Compare Items -->
 			<Transition show={phase === 'compare' && currentComparison !== null} key="compare">
 				<Card class="p-6">
-					<h2 class="mb-4 text-xl font-semibold">Compare Items</h2>
+					<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
 					<p class="mb-4 text-sm text-muted-foreground">Click on the item you prefer:</p>
 					<div class="grid gap-4 sm:grid-cols-2" data-testid="comparison-buttons">
 						<ComparisonButton
@@ -496,16 +496,14 @@
 						{/if}
 
 						{#if phase === 'result'}
-							<form
-								class="flex gap-2"
-								onsubmit={(e) => {
-									e.preventDefault();
-									insertNewItem();
-								}}
-							>
-								<Input bind:value={insertItem} placeholder="Insert new item..." />
-								<Button type="submit">Insert</Button>
-							</form>
+							<div class="flex gap-2">
+								<Input
+									bind:value={insertItem}
+									placeholder="Insert new item..."
+									onkeydown={(e) => e.key === 'Enter' && insertNewItem()}
+								/>
+								<Button onclick={insertNewItem}>Insert</Button>
+							</div>
 						{/if}
 					</div>
 				</Card>
