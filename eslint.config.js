@@ -10,7 +10,7 @@ const gitignorePath = fileURLToPath(new URL('./.gitignore', import.meta.url));
 export default ts.config(
 	includeIgnoreFile(gitignorePath),
 	js.configs.recommended,
-	...ts.configs.recommended,
+	...ts.configs.strict,
 	...svelte.configs['flat/recommended'],
 	prettier,
 	...svelte.configs['flat/prettier'],
@@ -29,6 +29,12 @@ export default ts.config(
 			parserOptions: {
 				parser: ts.parser
 			}
+		}
+	},
+	{
+		files: ['e2e/*.ts'],
+		rules: {
+			'@typescript-eslint/no-non-null-assertion': 'off'
 		}
 	}
 );

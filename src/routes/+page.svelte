@@ -447,7 +447,7 @@
 
 					<div class="space-y-4">
 						<ul class="space-y-2">
-							{#each sortedItems.value as item, i (item)}
+							{#each sortedItems.value as item (item)}
 								<li
 									animate:flip={{ duration: 300 }}
 									transition:fade={{ duration: 200 }}

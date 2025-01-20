@@ -12,7 +12,6 @@
 	import { slide } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 	import { localStore } from '$lib/utils/storage.svelte';
-	import { onMount } from 'svelte';
 
 	type Ranking = {
 		userId: string;

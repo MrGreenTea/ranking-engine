@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { cn } from '$lib/utils';
 
 	export let item: string;
 	export let onSelect: () => void;
