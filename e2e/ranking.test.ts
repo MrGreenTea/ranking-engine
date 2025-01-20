@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { faker } from '@faker-js/faker';
+import { enterItems } from './helpers';
 
 /**
  * @description
@@ -23,11 +24,7 @@ import { faker } from '@faker-js/faker';
 
 		await page.goto('/');
 
-		// enter randomized items
-		for (const item of items) {
-			await page.getByPlaceholder('Add an item...').fill(item.toString());
-			await page.getByRole('button', { name: 'Add' }).click();
-		}
+		await enterItems(page, items);
 
 		await page.getByRole('button', { name: 'Start Sorting' }).click();
 		while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
@@ -54,10 +51,7 @@ import { faker } from '@faker-js/faker';
 		await page.goto('/');
 
 		// enter randomized items
-		for (const item of items) {
-			await page.getByPlaceholder('Add an item...').fill(item.toString());
-			await page.getByRole('button', { name: 'Add' }).click();
-		}
+		await enterItems(page, items);
 
 		await page.getByPlaceholder('Top K items (optional)').fill(i.toString());
 

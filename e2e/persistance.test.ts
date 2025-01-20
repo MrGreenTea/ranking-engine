@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { faker } from '@faker-js/faker';
+import { enterItems } from './helpers';
 
 test('reloading the page keeps the list', async ({ page }) => {
 	const items = Array.from({ length: 10 }, () => faker.word.noun());
@@ -7,10 +8,7 @@ test('reloading the page keeps the list', async ({ page }) => {
 	await page.goto('/');
 
 	// enter randomized items
-	for (const item of items) {
-		await page.getByPlaceholder('Add an item...').fill(item.toString());
-		await page.getByRole('button', { name: 'Add' }).click();
-	}
+	await enterItems(page, items);
 
 	const actualComparisonText = await page.getByText('Estimated comparisons').textContent();
 
@@ -26,10 +24,7 @@ test('Clear all button works after entering items', async ({ page }) => {
 	await page.goto('/');
 
 	// enter randomized items
-	for (const item of items) {
-		await page.getByPlaceholder('Add an item...').fill(item.toString());
-		await page.getByRole('button', { name: 'Add' }).click();
-	}
+	await enterItems(page, items);
 
 	await page.getByRole('button', { name: 'Clear all' }).click();
 	await expect(page.getByRole('listitem')).toBeHidden();
@@ -41,10 +36,7 @@ test('reloading the page keeps the sorted list', async ({ page }) => {
 	await page.goto('/');
 
 	// enter randomized items
-	for (const item of items) {
-		await page.getByPlaceholder('Add an item...').fill(item.toString());
-		await page.getByRole('button', { name: 'Add' }).click();
-	}
+	await enterItems(page, items);
 
 	await page.getByRole('button', { name: 'Start Sorting' }).click();
 
@@ -67,10 +59,7 @@ test('reloading the page keeps the top k list', async ({ page }) => {
 	await page.goto('/');
 
 	// enter randomized items
-	for (const item of items) {
-		await page.getByPlaceholder('Add an item...').fill(item.toString());
-		await page.getByRole('button', { name: 'Add' }).click();
-	}
+	await enterItems(page, items);
 
 	await page.getByPlaceholder('Top K items (optional)').fill('5');
 	await page.getByRole('button', { name: 'Start Sorting' }).click();
