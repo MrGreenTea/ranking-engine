@@ -118,7 +118,7 @@
 	</div>
 
 	<div class="space-y-8">
-		<div class="phase-container">
+		<div class="phase-container relative min-h-[200px]">
 			<!-- Phase 1: Create List -->
 			<Transition show={phase === 'create'} key="create">
 				<CreatePhase onStartSorting={startSorting} {items} bind:topK />
@@ -256,11 +256,6 @@
 </main>
 
 <style>
-	.phase-container {
-		position: relative;
-		min-height: 200px;
-	}
-
 	.phase-container > :global(*) {
 		position: absolute;
 		top: 0;
