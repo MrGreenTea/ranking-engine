@@ -2,12 +2,14 @@
 	import { Button } from '$lib/components/ui/button';
 	import { localStore } from '$lib/utils/storage.svelte';
 	import { onMount } from 'svelte';
-	import Transition from '$lib/components/transitions.svelte';
 	import { estimateMergeSortComparisons, mergeSort } from '$lib/sorting';
 	import { estimateTopKComparisons, findTopK } from '$lib/top-k-selection';
 	import CreatePhase from './components/CreatePhase.svelte';
 	import ComparePhase from './components/ComparePhase.svelte';
 	import ResultPhase from './components/ResultPhase.svelte';
+
+	import { crossfade } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
 
 	type Phase = 'create' | 'compare' | 'result';
 
@@ -22,6 +24,11 @@
 	let topK = $state<number | null>(null);
 
 	let comparisonCache = new Map<string, string[]>();
+
+	const [send, receive] = crossfade({
+		duration: 200,
+		easing: cubicOut
+	});
 
 	onMount(() => {
 		// If we have sorted items, go to result phase
@@ -118,27 +125,35 @@
 	<div class="space-y-8">
 		<div class="phase-container relative min-h-[200px]">
 			<!-- Phase 1: Create List -->
-			<Transition show={phase === 'create'} key="create">
-				<CreatePhase onStartSorting={startSorting} {items} bind:topK />
-			</Transition>
+			{#if phase === 'create'}
+				<div class="transition-content" in:receive={{ key: 'phase' }} out:send={{ key: 'phase' }}>
+					<CreatePhase onStartSorting={startSorting} {items} bind:topK />
+				</div>
+			{/if}
 
-			<!-- Phase 2: Compare Items -->
-			<Transition show={phase === 'compare' && currentComparison !== null} key="compare">
-				<ComparePhase {currentComparison} {choose} />
-			</Transition>
+			{#if phase === 'compare'}
+				<!-- Phase 2: Compare Items -->
+				<div class="transition-content" in:receive={{ key: 'phase' }} out:send={{ key: 'phase' }}>
+					{#if currentComparison}
+						<ComparePhase {currentComparison} {choose} />
+					{/if}
+				</div>
+			{/if}
 
 			<!-- Phase 3: Show Results -->
-			<Transition show={phase === 'result'} key="result">
-				<ResultPhase
-					{topK}
-					comparisonsCount={comparisonsCount.value}
-					estimatedComparisons={estimatedComparisons.value}
-					sortedItems={sortedItems.value}
-					remainingItems={remainingItems.value}
-					{compareItems}
-					bind:phase
-				/>
-			</Transition>
+			{#if phase === 'result'}
+				<div class="transition-content" in:receive={{ key: 'phase' }} out:send={{ key: 'phase' }}>
+					<ResultPhase
+						{topK}
+						comparisonsCount={comparisonsCount.value}
+						estimatedComparisons={estimatedComparisons.value}
+						sortedItems={sortedItems.value}
+						remainingItems={remainingItems.value}
+						{compareItems}
+						bind:phase
+					/>
+				</div>
+			{/if}
 		</div>
 	</div>
 </main>
@@ -149,5 +164,10 @@
 		top: 0;
 		left: 0;
 		right: 0;
+	}
+
+	.transition-content {
+		display: block;
+		width: 100%;
 	}
 </style>
