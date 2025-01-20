@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import { enterItems, randomItemList, sortItems } from './helpers';
 
+test.describe.configure({ mode: 'parallel' });
+
 /**
  * @description
  *
@@ -56,11 +58,12 @@ import { enterItems, randomItemList, sortItems } from './helpers';
 
 /* Reproduce a bug where adding items would not deduplicate them before sorting. */
 [
+	['b', 'a', 'b'],
 	['a', 'b', 'c', 'a'],
 	['a', 'a', 'b', 'a'],
 	['a', 'b', 'a', 'c']
 ].forEach((items) => {
-	test(`Adding the same item twice does to cause comparison with itself (${items.join(', ')})`, async ({
+	test(`Adding the same item twice does not cause comparison with itself (${items.join(', ')})`, async ({
 		page
 	}) => {
 		await page.goto('/');
@@ -79,7 +82,11 @@ import { enterItems, randomItemList, sortItems } from './helpers';
 
 			expect(button1Content).not.toEqual(button2Content);
 
-			await button1.click();
+			if (button1Content! < button2Content!) {
+				await button1.click();
+			} else {
+				await button2.click();
+			}
 		}
 
 		// deduplicated and sorted
