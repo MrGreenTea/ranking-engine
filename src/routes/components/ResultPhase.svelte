@@ -5,7 +5,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { fade } from 'svelte/transition';
 
-	import { binaryInsert } from '$lib/binary-insert';
+	import type { LocalStore } from '$lib/utils/storage.svelte';
 
 	type Phase = 'create' | 'compare' | 'result';
 
@@ -15,16 +15,16 @@
 		estimatedComparisons,
 		sortedItems,
 		remainingItems,
-		compareItems,
-		phase = $bindable()
+		phase = $bindable(),
+		items = $bindable()
 	}: {
 		topK: number | null;
 		comparisonsCount: number;
 		estimatedComparisons: number;
 		sortedItems: string[];
 		remainingItems: string[];
-		compareItems: (a: string, b: string) => Promise<number>;
 		phase: Phase;
+		items: LocalStore<string[]>;
 	} = $props();
 
 	let insertItem = $state('');
@@ -45,16 +45,10 @@
 	async function insertNewItem() {
 		const trimmedItem = insertItem.trim();
 		if (trimmedItem && !sortedItems.includes(trimmedItem)) {
-			const currentPhase = phase;
 			phase = 'compare';
-			await binaryInsert(trimmedItem, sortedItems, compareItems);
-			phase = currentPhase;
+			// TODO: reimplement binary insert
+			items.value = [...items.value, trimmedItem];
 			insertItem = '';
-			// Briefly highlight the newly inserted item
-			highlightedItem = trimmedItem;
-			setTimeout(() => {
-				highlightedItem = null;
-			}, 1000);
 		}
 	}
 </script>

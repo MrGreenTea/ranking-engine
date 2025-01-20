@@ -4,6 +4,7 @@ type StorageKey =
 	| 'ranking-items'
 	| 'ranking-sorted-items'
 	| 'ranking-remaining-items'
+	| 'ranking-top-k'
 	| 'collaborative-rankings'
 	| 'collaborative-sort-by'
 	| 'ranking-comparisons-count'

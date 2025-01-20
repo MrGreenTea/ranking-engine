@@ -19,12 +19,12 @@
 	import { Plus } from 'lucide-svelte';
 
 	let {
-		items = $bindable(),
-		topK = $bindable(),
-		onStartSorting: startSorting
+		items,
+		topK,
+		onStartSorting
 	}: {
 		items: LocalStore<string[]>;
-		topK: number | null;
+		topK: LocalStore<number | null>;
 		onStartSorting: () => void;
 	} = $props();
 
@@ -64,7 +64,7 @@
 				type="number"
 				min="1"
 				placeholder="Top K items (optional)"
-				bind:value={topK}
+				bind:value={topK.value}
 				class="w-48"
 			/>
 			<Dialog bind:open={dialogOpen}>
@@ -99,15 +99,15 @@
 	</div>
 
 	<div class="mb-6 flex justify-center">
-		<Button disabled={items.value.length < 2} onclick={startSorting} class="w-48"
+		<Button disabled={items.value.length < 2} onclick={onStartSorting} class="w-48"
 			>Start Sorting</Button
 		>
 	</div>
 
 	{#if items.value.length > 0}
 		<div class="mb-4 text-sm text-muted-foreground">
-			Estimated comparisons: {topK !== null && topK > 0
-				? estimateTopKComparisons(items.value.length, topK)
+			Estimated comparisons: {topK.value !== null && topK.value > 0
+				? estimateTopKComparisons(items.value.length, topK.value)
 				: estimateMergeSortComparisons(items.value.length)}
 		</div>
 		<ul class="mb-4 space-y-2">
