@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { faker } from '@faker-js/faker';
-import { enterItems } from './helpers';
+import { enterItems, randomItemList, sortItems } from './helpers';
 
 /**
  * @description
@@ -17,25 +16,18 @@ import { enterItems } from './helpers';
 // ranks 2, 3, 5, 10 items correctly
 [2, 3, 5, 10].forEach((i) => {
 	test(`Ranks ${i} items correctly`, async ({ page }) => {
-		const items = Array.from({ length: i }, () => faker.word.noun());
-		// we sort the items alphabetically to better understand the output
-		// this is not necessary but helps us to verify the output
-		const sortedItems = [...items].sort();
+		const items = randomItemList(i);
 
 		await page.goto('/');
 
 		await enterItems(page, items);
 
 		await page.getByRole('button', { name: 'Start Sorting' }).click();
-		while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-			const button1 = await page.getByTestId('comparison-buttons').getByRole('button').first();
-			const button2 = await page.getByTestId('comparison-buttons').getByRole('button').last();
-			const button1Content = await button1.textContent();
-			const button2Content = await button2.textContent();
+		await sortItems(page);
 
-			await (button1Content! < button2Content! ? button1 : button2).click();
-		}
-
+		// we sort the items alphabetically to better understand the output
+		// this is not necessary but helps us to verify the output
+		const sortedItems = [...items].sort();
 		await expect(page.getByRole('listitem')).toContainText(sortedItems);
 	});
 });
@@ -43,10 +35,7 @@ import { enterItems } from './helpers';
 // test top 3, 5 and 10 items
 [3, 5, 10].forEach((i) => {
 	test(`Top ${i} items`, async ({ page }) => {
-		const items = Array.from({ length: 10 + i }, () => faker.word.noun());
-		// we sort the items alphabetically to better understand the output
-		// this is not necessary but helps us to verify the output
-		const sortedItems = [...items].sort();
+		const items = randomItemList(10 + i);
 
 		await page.goto('/');
 
@@ -56,15 +45,11 @@ import { enterItems } from './helpers';
 		await page.getByPlaceholder('Top K items (optional)').fill(i.toString());
 
 		await page.getByRole('button', { name: 'Start Sorting' }).click();
-		while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-			const button1 = await page.getByTestId('comparison-buttons').getByRole('button').first();
-			const button2 = await page.getByTestId('comparison-buttons').getByRole('button').last();
-			const button1Content = await button1.textContent();
-			const button2Content = await button2.textContent();
+		await sortItems(page);
 
-			await (button1Content! < button2Content! ? button1 : button2).click();
-		}
-
+		// we sort the items alphabetically to better understand the output
+		// this is not necessary but helps us to verify the output
+		const sortedItems = [...items].sort();
 		await expect(page.getByTestId('sorted-item')).toContainText(sortedItems.slice(0, i));
 	});
 });
