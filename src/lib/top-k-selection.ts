@@ -1,3 +1,4 @@
+import { binaryInsert } from './binary-insert';
 import { estimateMergeSortComparisons, mergeSort } from './sorting';
 
 /* Asynchronous compare function just like in Array.sort */
@@ -26,6 +27,7 @@ export async function findTopK<T>(
 	// Initialize heap by just sorting
 	const [initialHeap, remaining] = [arr.slice(0, k), arr.slice(k)];
 	let heap = await mergeSort(initialHeap, compareItems);
+	console.log('Starting heap', heap);
 
 	// Process remaining items
 	for (const currentItem of remaining) {
@@ -37,7 +39,9 @@ export async function findTopK<T>(
 		if (comparison < 0) {
 			// replace heap with new item included
 			// removes last item in heap
-			heap = await mergeSort([...heap.slice(0, -1), currentItem], compareItems);
+			heap = heap.slice(0, -1);
+			await binaryInsert(currentItem, heap, compareItems);
+			console.log('New heap', heap);
 		}
 	}
 
