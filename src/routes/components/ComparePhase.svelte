@@ -98,7 +98,10 @@
 	{#await sort()}
 		<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
 		<p class="mb-4 text-sm text-muted-foreground">Click on the item you prefer:</p>
-		<div class="grid min-h-32 gap-4 sm:grid-cols-2" data-testid="comparison-buttons">
+		<div
+			class="grid min-h-32 grid-rows-2 gap-4 sm:grid-cols-2 sm:grid-rows-1"
+			data-testid="comparison-buttons"
+		>
 			{#if currentComparison != null}
 				{#key currentComparison.item1}
 					<Button
