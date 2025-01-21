@@ -98,14 +98,14 @@
 	{#await sort()}
 		<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
 		<p class="mb-4 text-sm text-muted-foreground">Click on the item you prefer:</p>
-		<div class="grid gap-4 sm:grid-cols-2" data-testid="comparison-buttons">
+		<div class="grid min-h-32 gap-4 sm:grid-cols-2" data-testid="comparison-buttons">
 			{#if currentComparison != null}
 				{#key currentComparison.item1}
 					<Button
 						onclick={() => {
 							if (currentComparison != null) choose(currentComparison.item1);
 						}}
-						class="h-32 text-wrap break-words text-lg"
+						class="h-full text-wrap break-words text-lg"
 					>
 						{currentComparison.item1}
 					</Button>
@@ -115,7 +115,7 @@
 						onclick={() => {
 							if (currentComparison != null) choose(currentComparison.item2);
 						}}
-						class="h-32 text-wrap break-words text-lg"
+						class="h-full text-wrap break-words text-lg"
 					>
 						{currentComparison.item2}
 					</Button>
