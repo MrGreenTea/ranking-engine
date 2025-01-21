@@ -105,7 +105,7 @@
 						onclick={() => {
 							if (currentComparison != null) choose(currentComparison.item1);
 						}}
-						class="h-32 text-lg"
+						class="h-32 text-wrap break-words text-lg"
 					>
 						{currentComparison.item1}
 					</Button>
@@ -115,7 +115,7 @@
 						onclick={() => {
 							if (currentComparison != null) choose(currentComparison.item2);
 						}}
-						class="h-32 text-lg"
+						class="h-32 text-wrap break-words text-lg"
 					>
 						{currentComparison.item2}
 					</Button>
