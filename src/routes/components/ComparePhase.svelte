@@ -84,13 +84,15 @@
 	});
 
 	async function sort() {
+		let result: string[], rest: string[];
 		if (topK !== null && topK > 0) {
-			const [top, rest] = await findTopK([...items], topK, compareItems);
-			onSortingFinished(top, rest, comparisonsCount);
+			[result, rest] = await findTopK([...items], topK, compareItems);
 		} else {
-			const result = await mergeSort([...items], compareItems);
-			onSortingFinished(result, [], comparisonsCount);
+			result = await mergeSort([...items], compareItems);
+			rest = [];
 		}
+
+		onSortingFinished(result, rest, comparisonsCount);
 	}
 </script>
 
