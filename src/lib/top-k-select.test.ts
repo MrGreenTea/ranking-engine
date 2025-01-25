@@ -1,6 +1,6 @@
-import { expect } from 'vitest';
 import { findTopK } from '$lib/top-k-selection';
-import { test, fc } from '@fast-check/vitest';
+import { fc, test } from '@fast-check/vitest';
+import { expect } from 'vitest';
 
 test.prop({ items: fc.array(fc.integer()) })('should sort numbers', async ({ items }) => {
 	const compare = (a: number, b: number) => a - b;

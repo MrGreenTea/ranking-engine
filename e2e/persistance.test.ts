@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test';
 import { faker } from '@faker-js/faker';
+import { expect, test } from '@playwright/test';
+
 import { enterItems, randomItemList, sortItems } from './helpers';
 
 test('reloading the page keeps the list', async ({ page }) => {
@@ -87,7 +88,7 @@ test('reloading the page after inserting an item keeps the list', async ({ page 
 
 	const newItem = faker.word.noun();
 	await page.getByPlaceholder('Insert new item').fill(newItem);
-	await page.getByRole('button', { name: 'Insert', exact: true }).click();
+	await page.getByRole('button', { exact: true, name: 'Insert' }).click();
 
 	// we don't care about the actual order
 	await sortItems(page);

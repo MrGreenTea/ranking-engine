@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { localStore } from '$lib/utils/storage.svelte';
-	import { onMount } from 'svelte';
-	import CreatePhase from './components/CreatePhase.svelte';
-	import ComparePhase from './components/ComparePhase.svelte';
-	import ResultPhase from './components/ResultPhase.svelte';
-
-	import { crossfade } from 'svelte/transition';
-	import { cubicOut } from 'svelte/easing';
 	import { estimateMergeSortComparisons } from '$lib/sorting';
 	import { estimateTopKComparisons } from '$lib/top-k-selection';
+	import { localStore } from '$lib/utils/storage.svelte';
+	import { onMount } from 'svelte';
+	import { cubicOut } from 'svelte/easing';
+	import { crossfade } from 'svelte/transition';
 
-	type Phase = 'create' | 'compare' | 'result';
+	import ComparePhase from './components/ComparePhase.svelte';
+	import CreatePhase from './components/CreatePhase.svelte';
+	import ResultPhase from './components/ResultPhase.svelte';
+
+	type Phase = 'compare' | 'create' | 'result';
 
 	let items = localStore<string[]>('ranking-items', []);
 	let sortedItems = localStore<string[]>('ranking-sorted-items', []);
@@ -33,7 +33,7 @@
 		}
 	});
 
-	let topK = localStore<number | null>('ranking-top-k', null);
+	let topK = localStore<null | number>('ranking-top-k', null);
 
 	const [send, receive] = crossfade({
 		duration: 200,

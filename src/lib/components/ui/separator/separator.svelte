@@ -2,9 +2,9 @@
 	import { Separator as SeparatorPrimitive } from 'bits-ui';
 
 	let {
-		ref = $bindable(null),
 		class: className,
 		orientation = 'horizontal',
+		ref = $bindable(null),
 		...restProps
 	}: SeparatorPrimitive.RootProps = $props();
 </script>

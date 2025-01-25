@@ -1,20 +1,20 @@
 import { browser } from '$app/environment';
 
 type StorageKey =
-	| 'ranking-items'
-	| 'ranking-sorted-items'
-	| 'ranking-remaining-items'
-	| 'ranking-top-k'
 	| 'collaborative-rankings'
 	| 'collaborative-sort-by'
+	| 'ranking-comparison-cache'
 	| 'ranking-comparisons-count'
 	| 'ranking-estimated-comparisons'
-	| 'ranking-comparison-cache';
+	| 'ranking-items'
+	| 'ranking-remaining-items'
+	| 'ranking-sorted-items'
+	| 'ranking-top-k';
 
 export class LocalStore<T> {
-	value = $state<T>() as T;
-	key = '';
 	initialValue: T;
+	key = '';
+	value = $state<T>() as T;
 
 	constructor(key: StorageKey, value: T) {
 		this.key = key;
@@ -36,16 +36,16 @@ export class LocalStore<T> {
 		});
 	}
 
-	serialize(value: T): string {
-		return JSON.stringify(value);
-	}
-
 	deserialize(item: string): T {
 		return JSON.parse(item);
 	}
 
 	reset() {
 		this.value = this.initialValue;
+	}
+
+	serialize(value: T): string {
+		return JSON.stringify(value);
 	}
 }
 

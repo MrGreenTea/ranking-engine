@@ -9,20 +9,20 @@ type TextareaEvents = {
 	change: FormTextareaEvent<Event>;
 	click: FormTextareaEvent<MouseEvent>;
 	focus: FormTextareaEvent<FocusEvent>;
+	input: FormTextareaEvent<InputEvent>;
 	keydown: FormTextareaEvent<KeyboardEvent>;
 	keypress: FormTextareaEvent<KeyboardEvent>;
 	keyup: FormTextareaEvent<KeyboardEvent>;
-	mouseover: FormTextareaEvent<MouseEvent>;
 	mouseenter: FormTextareaEvent<MouseEvent>;
 	mouseleave: FormTextareaEvent<MouseEvent>;
+	mouseover: FormTextareaEvent<MouseEvent>;
 	paste: FormTextareaEvent<ClipboardEvent>;
-	input: FormTextareaEvent<InputEvent>;
 };
 
 export {
+	type FormTextareaEvent,
 	Root,
 	//
 	Root as Textarea,
-	type TextareaEvents,
-	type FormTextareaEvent
+	type TextareaEvents
 };

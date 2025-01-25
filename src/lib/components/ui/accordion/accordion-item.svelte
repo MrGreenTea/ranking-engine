@@ -2,8 +2,8 @@
 	import { Accordion as AccordionPrimitive } from 'bits-ui';
 
 	let {
-		ref = $bindable(null),
 		class: className,
+		ref = $bindable(null),
 		...restProps
 	}: AccordionPrimitive.ItemProps = $props();
 </script>

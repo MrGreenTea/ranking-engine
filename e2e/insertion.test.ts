@@ -1,6 +1,7 @@
-import { expect, test } from '@playwright/test';
 import { faker } from '@faker-js/faker';
-import { randomItemList, enterItems, sortItems } from './helpers';
+import { expect, test } from '@playwright/test';
+
+import { enterItems, randomItemList, sortItems } from './helpers';
 
 [
 	{ items: ['A', 'B', 'C'], newItem: 'D', title: 'Insert last' },
@@ -19,7 +20,7 @@ import { randomItemList, enterItems, sortItems } from './helpers';
 		await sortItems(page);
 
 		await page.getByPlaceholder('Insert new item').fill(newItem);
-		await page.getByRole('button', { name: 'Insert', exact: true }).click();
+		await page.getByRole('button', { exact: true, name: 'Insert' }).click();
 
 		await sortItems(page);
 

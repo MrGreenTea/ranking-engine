@@ -1,10 +1,23 @@
+type CompareFunction<T> = (a: T, b: T) => Promise<number>;
+
 export function estimateMergeSortComparisons(n: number): number {
 	if (n <= 1) return 0;
 	// Expected comparisons for merge sort is n * log2(n)
 	return Math.ceil(n * Math.log2(n));
 }
 
-type CompareFunction<T> = (a: T, b: T) => Promise<number>;
+export async function mergeSort<T>(arr: T[], compare: CompareFunction<T>): Promise<T[]> {
+	if (arr.length <= 1) return arr;
+
+	const mid = Math.floor(arr.length / 2);
+	const left = arr.slice(0, mid);
+	const right = arr.slice(mid);
+
+	const sortedLeft = await mergeSort(left, compare);
+	const sortedRight = await mergeSort(right, compare);
+
+	return mergeArrays(sortedLeft, sortedRight, compare);
+}
 
 async function mergeArrays<T>(left: T[], right: T[], compare: CompareFunction<T>): Promise<T[]> {
 	const result: T[] = [];
@@ -29,17 +42,4 @@ async function mergeArrays<T>(left: T[], right: T[], compare: CompareFunction<T>
 	}
 
 	return [...result, ...left.slice(leftIndex), ...right.slice(rightIndex)];
-}
-
-export async function mergeSort<T>(arr: T[], compare: CompareFunction<T>): Promise<T[]> {
-	if (arr.length <= 1) return arr;
-
-	const mid = Math.floor(arr.length / 2);
-	const left = arr.slice(0, mid);
-	const right = arr.slice(mid);
-
-	const sortedLeft = await mergeSort(left, compare);
-	const sortedRight = await mergeSort(right, compare);
-
-	return mergeArrays(sortedLeft, sortedRight, compare);
 }

@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { Card } from '$lib/components/ui/card';
-	import { Button } from '$lib/components/ui/button';
-	import { onMount } from 'svelte';
 	import type { LocalStore } from '$lib/utils/storage.svelte';
 
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
 	import { mergeSort } from '$lib/sorting';
 	import { findTopK } from '$lib/top-k-selection';
+	import { onMount } from 'svelte';
 
-	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
+	let currentComparison = $state<null | { item1: string; item2: string }>(null);
 
 	let {
-		topK,
-		items,
 		comparisonCache,
 		comparisonsCount,
-		onSortingFinished
+		items,
+		onSortingFinished,
+		topK
 	}: {
-		topK: number | null;
-		items: string[];
 		comparisonCache: LocalStore<Record<string, string[]>>;
 		comparisonsCount: LocalStore<number>;
+		items: string[];
 		onSortingFinished: (top: string[], rest: string[], comparisonsCount: number) => void;
+		topK: null | number;
 	} = $props();
 
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
@@ -92,7 +92,7 @@
 	});
 
 	async function sort() {
-		let result: string[], rest: string[];
+		let rest: string[], result: string[];
 		if (topK !== null && topK > 0) {
 			[result, rest] = await findTopK([...items], topK, compareItems);
 		} else {

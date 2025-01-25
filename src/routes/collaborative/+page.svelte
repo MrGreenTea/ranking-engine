@@ -1,37 +1,37 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import { Card } from '$lib/components/ui/card';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
 	import {
 		Accordion,
 		AccordionContent,
 		AccordionItem,
 		AccordionTrigger
 	} from '$lib/components/ui/accordion';
-	import { slide } from 'svelte/transition';
-	import { flip } from 'svelte/animate';
+	import { Button } from '$lib/components/ui/button';
+	import { Card } from '$lib/components/ui/card';
+	import { Select, SelectContent, SelectItem, SelectTrigger } from '$lib/components/ui/select';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { localStore } from '$lib/utils/storage.svelte';
+	import { flip } from 'svelte/animate';
+	import { slide } from 'svelte/transition';
 
 	type Ranking = {
-		userId: string;
-		name: string;
 		items: string[];
+		name: string;
+		userId: string;
 	};
 
 	type ItemStats = {
 		item: string;
+		max: number;
 		median: number;
 		min: number;
-		max: number;
 		spread: number;
 	};
 
-	type SortBy = 'median' | 'min' | 'max' | 'spread';
+	type SortBy = 'max' | 'median' | 'min' | 'spread';
 
 	type ValidationError = {
-		missing: string[];
 		extra: string[];
+		missing: string[];
 	};
 
 	let rankings = localStore<Ranking[]>('collaborative-rankings', []);
@@ -39,18 +39,18 @@
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
 	let newRankingName = $state('');
-	let validationError = $state<ValidationError | null>(null);
-	let editingNameId = $state<string | null>(null);
+	let validationError = $state<null | ValidationError>(null);
+	let editingNameId = $state<null | string>(null);
 	let editingNameValue = $state('');
 
-	const sortOptions: { value: SortBy; label: string }[] = [
-		{ value: 'median', label: 'Median Position' },
-		{ value: 'min', label: 'Best Position' },
-		{ value: 'max', label: 'Worst Position' },
-		{ value: 'spread', label: 'Position Spread' }
+	const sortOptions: { label: string; value: SortBy }[] = [
+		{ label: 'Median Position', value: 'median' },
+		{ label: 'Best Position', value: 'min' },
+		{ label: 'Worst Position', value: 'max' },
+		{ label: 'Position Spread', value: 'spread' }
 	];
 
-	function validateRanking(items: string[]): ValidationError | null {
+	function validateRanking(items: string[]): null | ValidationError {
 		if (rankings.value.length === 0) return null; // First ranking defines the set
 
 		const expectedItems = new Set(rankings.value[0].items);
@@ -74,7 +74,7 @@
 		});
 
 		if (missing.length > 0 || extra.length > 0) {
-			return { missing, extra };
+			return { extra, missing };
 		}
 
 		return null;
@@ -99,7 +99,7 @@
 		validationError = null;
 		rankings.value = [
 			...rankings.value,
-			{ userId, name: newRankingName || `List ${rankings.value.length + 1}`, items }
+			{ items, name: newRankingName || `List ${rankings.value.length + 1}`, userId }
 		];
 		newRanking = '';
 		newRankingName = '';
@@ -117,9 +117,9 @@
 
 			return {
 				item,
+				max: sorted[sorted.length - 1],
 				median,
 				min: sorted[0],
-				max: sorted[sorted.length - 1],
 				spread: sorted[sorted.length - 1] - sorted[0]
 			};
 		});

@@ -1,5 +1,14 @@
-import { Page, expect } from '@playwright/test';
 import { faker } from '@faker-js/faker';
+import { expect, Page } from '@playwright/test';
+
+export async function enterItems(page: Page, items: string[]) {
+	for (const item of items) {
+		await page.getByPlaceholder('Add an item').fill(item.toString());
+		await page.getByRole('button', { exact: true, name: 'Add' }).click();
+		// also makes sure we wait for it to be added
+		await expect(page.getByRole('listitem').getByText(item, { exact: true })).toBeVisible();
+	}
+}
 
 /*
  * Returns an array of random unique words.
@@ -13,15 +22,6 @@ export function randomItemList(length: number) {
 	return Array.from(result);
 }
 
-export async function enterItems(page: Page, items: string[]) {
-	for (const item of items) {
-		await page.getByPlaceholder('Add an item').fill(item.toString());
-		await page.getByRole('button', { name: 'Add', exact: true }).click();
-		// also makes sure we wait for it to be added
-		await expect(page.getByRole('listitem').getByText(item, { exact: true })).toBeVisible();
-	}
-}
-
 /*
  * Sorts the items using the ranking engine.
  * if sortedItems is provided the final order will be that.
@@ -31,13 +31,13 @@ export async function enterItems(page: Page, items: string[]) {
 export async function sortItems(
 	page: Page,
 	{
-		key = (item: string) => item,
 		beforeClick = () => {},
-		beforeComparison = () => {}
+		beforeComparison = () => {},
+		key = (item: string) => item
 	}: {
-		key?: (item: string) => string | number;
 		beforeClick?: (choice: string) => void;
 		beforeComparison?: (item1: string, item2: string) => void;
+		key?: (item: string) => number | string;
 	} = {}
 ) {
 	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {

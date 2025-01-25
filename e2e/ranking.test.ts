@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+
 import { enterItems, randomItemList, sortItems } from './helpers';
 
 test.describe.configure({ mode: 'parallel' });
@@ -70,12 +71,12 @@ test('Never ask the same comparison twice', async ({ page }) => {
 	await page.getByRole('button', { name: 'Start Sorting' }).click();
 
 	await sortItems(page, {
-		key: (item: string) => ranking.indexOf(item),
 		beforeComparison: (i1, i2) => {
 			const pair = [i1, i2].sort() as [string, string];
 			expect(seenPairs).not.toContainEqual(pair);
 			seenPairs.push(pair);
-		}
+		},
+		key: (item: string) => ranking.indexOf(item)
 	});
 });
 
@@ -97,12 +98,12 @@ test('Never ask the same comparison twice (top-k)', async ({ page }) => {
 	await page.getByRole('button', { name: 'Start Sorting' }).click();
 
 	await sortItems(page, {
-		key: (item: string) => ranking.indexOf(item),
 		beforeComparison: (i1, i2) => {
 			const pair = [i1, i2].sort() as [string, string];
 			expect(seenPairs).not.toContainEqual(pair);
 			seenPairs.push(pair);
-		}
+		},
+		key: (item: string) => ranking.indexOf(item)
 	});
 });
 

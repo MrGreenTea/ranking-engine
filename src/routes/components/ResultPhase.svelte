@@ -1,34 +1,34 @@
 <script lang="ts">
-	import { Card } from '$lib/components/ui/card';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import { flip } from 'svelte/animate';
-	import { Input } from '$lib/components/ui/input';
-	import { fade } from 'svelte/transition';
-
 	import type { LocalStore } from '$lib/utils/storage.svelte';
 
-	type Phase = 'create' | 'compare' | 'result';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { Card } from '$lib/components/ui/card';
+	import { Input } from '$lib/components/ui/input';
+	import { flip } from 'svelte/animate';
+	import { fade } from 'svelte/transition';
+
+	type Phase = 'compare' | 'create' | 'result';
 
 	let {
-		topK,
 		comparisonsCount,
 		estimatedComparisons,
-		sortedItems,
-		remainingItems,
+		items = $bindable(),
 		phase = $bindable(),
-		items = $bindable()
+		remainingItems,
+		sortedItems,
+		topK
 	}: {
-		topK: number | null;
 		comparisonsCount: number;
 		estimatedComparisons: number;
-		sortedItems: string[];
-		remainingItems: string[];
-		phase: Phase;
 		items: LocalStore<string[]>;
+		phase: Phase;
+		remainingItems: string[];
+		sortedItems: string[];
+		topK: null | number;
 	} = $props();
 
 	let insertItem = $state('');
-	let highlightedItem = $state<string | null>(null);
+	let highlightedItem = $state<null | string>(null);
 
 	async function copyList() {
 		try {

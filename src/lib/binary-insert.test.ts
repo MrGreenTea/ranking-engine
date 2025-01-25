@@ -1,6 +1,6 @@
-import { expect } from 'vitest';
 import { binaryInsert } from '$lib/binary-insert';
-import { test, fc } from '@fast-check/vitest';
+import { fc, test } from '@fast-check/vitest';
+import { expect } from 'vitest';
 
 test.prop({ items: fc.array(fc.integer()), new: fc.integer() })(
 	'should insert numbers',

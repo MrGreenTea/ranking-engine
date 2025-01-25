@@ -3,9 +3,9 @@
 	import ChevronDown from 'lucide-svelte/icons/chevron-down';
 
 	let {
-		ref = $bindable(null),
-		class: className,
 		children,
+		class: className,
+		ref = $bindable(null),
 		...restProps
 	}: WithoutChild<SelectPrimitive.TriggerProps> = $props();
 </script>

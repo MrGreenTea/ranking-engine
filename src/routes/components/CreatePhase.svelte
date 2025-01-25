@@ -1,4 +1,8 @@
 <script lang="ts">
+	import type { LocalStore } from '$lib/utils/storage.svelte';
+
+	import Button from '$lib/components/ui/button/button.svelte';
+	import Card from '$lib/components/ui/card/card.svelte';
 	import {
 		Dialog,
 		DialogContent,
@@ -6,26 +10,22 @@
 		DialogTitle,
 		DialogTrigger
 	} from '$lib/components/ui/dialog';
-	import { Textarea } from '$lib/components/ui/textarea';
-	import Button from '$lib/components/ui/button/button.svelte';
-	import Card from '$lib/components/ui/card/card.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-
-	import { estimateTopKComparisons } from '$lib/top-k-selection';
+	import { Textarea } from '$lib/components/ui/textarea';
 	import { estimateMergeSortComparisons } from '$lib/sorting';
+	import { estimateTopKComparisons } from '$lib/top-k-selection';
+	import { Plus } from 'lucide-svelte';
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
-	import type { LocalStore } from '$lib/utils/storage.svelte';
-	import { Plus } from 'lucide-svelte';
 
 	let {
 		items,
-		topK,
-		onStartSorting
+		onStartSorting,
+		topK
 	}: {
 		items: LocalStore<string[]>;
-		topK: LocalStore<number | null>;
 		onStartSorting: () => void;
+		topK: LocalStore<null | number>;
 	} = $props();
 
 	let dialogOpen = $state(false);
