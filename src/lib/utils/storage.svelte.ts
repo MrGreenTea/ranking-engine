@@ -8,7 +8,8 @@ type StorageKey =
 	| 'collaborative-rankings'
 	| 'collaborative-sort-by'
 	| 'ranking-comparisons-count'
-	| 'ranking-estimated-comparisons';
+	| 'ranking-estimated-comparisons'
+	| 'ranking-comparison-cache';
 
 export class LocalStore<T> {
 	value = $state<T>() as T;
@@ -17,12 +18,17 @@ export class LocalStore<T> {
 
 	constructor(key: StorageKey, value: T) {
 		this.key = key;
-		this.value = value;
 		this.initialValue = value;
 
 		if (browser) {
 			const item = localStorage.getItem(key);
-			if (item) this.value = this.deserialize(item);
+			if (item) {
+				this.value = this.deserialize(item);
+			} else {
+				this.value = value;
+			}
+		} else {
+			this.value = value;
 		}
 
 		$effect(() => {

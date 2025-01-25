@@ -2,24 +2,26 @@
 	import { Card } from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
 	import { onMount } from 'svelte';
+	import type { LocalStore } from '$lib/utils/storage.svelte';
 
 	import { mergeSort } from '$lib/sorting';
 	import { findTopK } from '$lib/top-k-selection';
 
 	let currentComparison = $state<{ item1: string; item2: string } | null>(null);
-	let comparisonsCount = $state(0);
 
 	let {
 		topK,
 		items,
+		comparisonCache,
+		comparisonsCount,
 		onSortingFinished
 	}: {
 		topK: number | null;
 		items: string[];
+		comparisonCache: LocalStore<Record<string, string[]>>;
+		comparisonsCount: LocalStore<number>;
 		onSortingFinished: (top: string[], rest: string[], comparisonsCount: number) => void;
 	} = $props();
-
-	let comparisonCache = new Map<string, string[]>();
 
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 
@@ -28,10 +30,10 @@
 	// same with b < c and c < a then b < a
 	function transitiveComparison(a: string, b: string): number | undefined {
 		// Direct check in cache
-		let cacheA = comparisonCache.get(a);
+		let cacheA = comparisonCache.value[a];
 		if (cacheA?.includes(b)) return -1;
 
-		let cacheB = comparisonCache.get(b);
+		let cacheB = comparisonCache.value[b];
 		if (cacheB?.includes(a)) return 1;
 
 		return undefined;
@@ -41,7 +43,7 @@
 		const cached = transitiveComparison(a, b);
 		if (cached !== undefined) {
 			console.log('Using cached comparison', cached, 'for pair', a, 'and', b);
-			console.debug(comparisonCache);
+			console.debug(comparisonCache.value);
 			return cached;
 		}
 
@@ -52,18 +54,24 @@
 		currentComparison = null;
 		resolveCurrentComparison = null;
 		if (choice === a) {
-			const cacheA = comparisonCache.get(a) ?? [];
-			comparisonCache.set(a, [...cacheA, b]);
+			const cacheA = comparisonCache.value[a] ?? [];
+			comparisonCache.value = {
+				...comparisonCache.value,
+				[a]: [...cacheA, b]
+			};
 			return -1;
 		} else {
-			const cacheB = comparisonCache.get(b) ?? [];
-			comparisonCache.set(b, [...cacheB, a]);
+			const cacheB = comparisonCache.value[b] ?? [];
+			comparisonCache.value = {
+				...comparisonCache.value,
+				[b]: [...cacheB, a]
+			};
 			return 1;
 		}
 	}
 
 	function choose(winner: string) {
-		comparisonsCount++;
+		comparisonsCount.value++;
 		resolveCurrentComparison?.(winner);
 	}
 
@@ -92,7 +100,7 @@
 			rest = [];
 		}
 
-		onSortingFinished(result, rest, comparisonsCount);
+		onSortingFinished(result, rest, comparisonsCount.value);
 	}
 </script>
 

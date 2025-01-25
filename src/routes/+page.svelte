@@ -18,20 +18,26 @@
 	let remainingItems = localStore<string[]>('ranking-remaining-items', []);
 	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
 	let estimatedComparisons = localStore<number>('ranking-estimated-comparisons', 0);
+	let comparisonCache = localStore<Record<string, string[]>>('ranking-comparison-cache', {});
+
 	let phase = $state<Phase>('create');
-
-	let topK = localStore<number | null>('ranking-top-k', null);
-
-	const [send, receive] = crossfade({
-		duration: 200,
-		easing: cubicOut
-	});
 
 	onMount(() => {
 		// If we have sorted items, go to result phase
 		if (sortedItems.value.length > 0) {
 			phase = 'result';
 		}
+		// If we have items and comparison cache, go to compare phase
+		else if (items.value.length > 0 && comparisonsCount.value > 0) {
+			phase = 'compare';
+		}
+	});
+
+	let topK = localStore<number | null>('ranking-top-k', null);
+
+	const [send, receive] = crossfade({
+		duration: 200,
+		easing: cubicOut
 	});
 
 	function clearAll() {
@@ -41,6 +47,7 @@
 		remainingItems.reset();
 		comparisonsCount.reset();
 		estimatedComparisons.reset();
+		comparisonCache.reset();
 	}
 
 	$effect(() => {
@@ -54,7 +61,7 @@
 	async function startSorting() {
 		if (items.value.length < 2) return;
 		phase = 'compare';
-		comparisonsCount.value = 0;
+		comparisonCache.reset();
 	}
 </script>
 
@@ -84,6 +91,8 @@
 					<ComparePhase
 						topK={topK.value}
 						items={items.value}
+						{comparisonCache}
+						{comparisonsCount}
 						onSortingFinished={(top, rest, comparisons) => {
 							sortedItems.value = top;
 							remainingItems.value = rest;
