@@ -4,10 +4,9 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import { mergeSort } from '$lib/sorting';
+	import { estimateMergeSortComparisons } from '$lib/sorting';
 	import { findTopK } from '$lib/top-k-selection';
 	import { onMount } from 'svelte';
-
-	let currentComparison = $state<null | { item1: string; item2: string }>(null);
 
 	let {
 		comparisonCache,
@@ -22,6 +21,12 @@
 		onSortingFinished: (top: string[], rest: string[], comparisonsCount: number) => void;
 		topK: null | number;
 	} = $props();
+
+	let currentComparison = $state<null | { item1: string; item2: string }>(null);
+	let totalComparisons = $state(0);
+	let currentProgress = $derived(
+		Math.round((comparisonsCount.value / totalComparisons) * 100) || 0
+	);
 
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 
@@ -86,6 +91,7 @@
 
 	onMount(() => {
 		window.addEventListener('keydown', handleKeydown);
+		totalComparisons = estimateMergeSortComparisons(items.length);
 		return () => {
 			window.removeEventListener('keydown', handleKeydown);
 		};
@@ -107,6 +113,15 @@
 <Card class="p-6">
 	{#await sort()}
 		<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
+		<div class="flex items-center justify-between">
+			<span class="text-sm text-muted-foreground"
+				>{comparisonsCount.value} / {totalComparisons} comparisons</span
+			>
+		</div>
+		<div class="my-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
+			<div class="h-full bg-primary transition-all" style="width: {currentProgress}%"></div>
+		</div>
+		<hr class="my-4" />
 		<p class="mb-4 text-sm text-muted-foreground">Click on the item you prefer:</p>
 		<div
 			class="grid min-h-32 grid-rows-2 gap-4 sm:grid-cols-2 sm:grid-rows-1"
