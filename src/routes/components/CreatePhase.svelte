@@ -70,7 +70,9 @@
 		<h2 class="text-xl font-semibold">Items to Rank</h2>
 	</div>
 
-	<div class="flex min-h-20 justify-between gap-2 pt-4">
+	<div
+		class="flex min-h-20 flex-col items-stretch gap-4 pt-4 sm:flex-row lg:items-start lg:justify-between lg:gap-2"
+	>
 		<div class="relative">
 			<label
 				class="absolute -top-2 left-2 inline-block rounded-lg bg-white px-1 text-xs font-medium text-muted-foreground"
@@ -89,7 +91,9 @@
 			/>
 		</div>
 		<div>
-			<Button disabled={items.value.length < 2} onclick={onStartSorting} class="w-48">Start</Button>
+			<Button disabled={items.value.length < 2} onclick={onStartSorting} class="w-full lg:w-48"
+				>Start</Button
+			>
 
 			{#if items.value.length > 2}
 				<div
@@ -109,7 +113,7 @@
 
 	<hr class="my-6" />
 
-	<div class="flex gap-2">
+	<div class="flex flex-col gap-4 lg:flex-row lg:gap-2">
 		<Input
 			type="text"
 			placeholder="Add an item..."
@@ -118,37 +122,39 @@
 			class="flex-1"
 			bind:ref={inputRef}
 		/>
-		<Button disabled={!newItem} onclick={addItem} aria-label="Add">
-			<Plus class="h-4 w-4" />
-		</Button>
-		<Dialog bind:open={dialogOpen}>
-			<DialogTrigger>
-				<div
-					class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-				>
-					Import
-				</div>
-			</DialogTrigger>
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Import Items</DialogTitle>
-				</DialogHeader>
-				<div class="space-y-4">
-					<Textarea
-						placeholder="Enter items, one per line"
-						bind:value={importText}
-						rows={10}
-						onkeydown={(e) => {
-							if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-								e.preventDefault();
-								importItems();
-							}
-						}}
-					/>
-					<Button onclick={importItems} class="w-full">Import Items</Button>
-				</div>
-			</DialogContent>
-		</Dialog>
+		<div class="flex items-center justify-stretch gap-2">
+			<Button disabled={!newItem} onclick={addItem} aria-label="Add" class="flex-1 lg:flex-none">
+				<Plus class="h-4 w-4" />
+			</Button>
+			<Dialog bind:open={dialogOpen}>
+				<DialogTrigger>
+					<div
+						class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+					>
+						Import
+					</div>
+				</DialogTrigger>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Import Items</DialogTitle>
+					</DialogHeader>
+					<div class="space-y-4">
+						<Textarea
+							placeholder="Enter items, one per line"
+							bind:value={importText}
+							rows={10}
+							onkeydown={(e) => {
+								if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+									e.preventDefault();
+									importItems();
+								}
+							}}
+						/>
+						<Button onclick={importItems} class="w-full">Import Items</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+		</div>
 	</div>
 
 	{#if items.value.length > 0}
