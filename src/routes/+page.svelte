@@ -17,11 +17,9 @@
 	let items = localStore<string[]>('ranking-items', []);
 	let sortedItems = localStore<string[]>('ranking-sorted-items', []);
 	let remainingItems = localStore<string[]>('ranking-remaining-items', []);
+
+	let topK = localStore<null | number>('ranking-top-k', null);
 	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
-	let estimatedComparisons = localStore<{ max: number; min: number }>(
-		'ranking-estimated-comparisons',
-		{ max: 0, min: 0 }
-	);
 	let comparisonCache = localStore<Record<string, string[]>>('ranking-comparison-cache', {});
 	let newItem = $state<null | string>(null);
 
@@ -38,7 +36,13 @@
 		}
 	});
 
-	let topK = localStore<null | number>('ranking-top-k', null);
+	const estimatedComparisons = $derived.by(() => {
+		if (topK.value !== null) {
+			return estimateTopKComparisons(items.value.length, topK.value);
+		} else {
+			return estimateMergeSortComparisons(items.value.length);
+		}
+	});
 
 	const [send, receive] = crossfade({
 		duration: 200,
@@ -51,19 +55,9 @@
 		sortedItems.reset();
 		remainingItems.reset();
 		comparisonsCount.reset();
-		estimatedComparisons.reset();
 		comparisonCache.reset();
 		topK.reset();
 	}
-
-	$effect(() => {
-		if (topK.value !== null) {
-			estimatedComparisons.value = estimateTopKComparisons(items.value.length, topK.value);
-		} else {
-			estimatedComparisons.value = estimateMergeSortComparisons(items.value.length);
-		}
-	});
-
 	async function startSorting() {
 		if (items.value.length < 2) return;
 		phase = 'compare';
@@ -111,7 +105,7 @@
 							comparisonsCount.value = comparisons;
 							phase = 'result';
 						}}
-						totalComparisons={estimatedComparisons.value}
+						{estimatedComparisons}
 					/>
 				</div>
 			{:else if phase === 'insertion' && newItem !== null}

@@ -10,22 +10,22 @@
 	let {
 		comparisonCache,
 		comparisonsCount,
+		estimatedComparisons,
 		items,
 		onSortingFinished,
-		topK,
-		totalComparisons
+		topK
 	}: {
 		comparisonCache: LocalStore<Record<string, string[]>>;
 		comparisonsCount: LocalStore<number>;
+		estimatedComparisons: { max: number; min: number };
 		items: string[];
 		onSortingFinished: (top: string[], rest: string[], comparisonsCount: number) => void;
 		topK: null | number;
-		totalComparisons: { max: number; min: number };
 	} = $props();
 
 	let currentComparison = $state<null | { item1: string; item2: string }>(null);
 	let currentProgress = $derived(
-		Math.round((comparisonsCount.value / totalComparisons.max) * 100) || 0
+		Math.round((comparisonsCount.value / estimatedComparisons.max) * 100) || 0
 	);
 
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
@@ -114,7 +114,7 @@
 		<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
 		<div class="flex items-center justify-between">
 			<span class="text-sm text-muted-foreground"
-				>{comparisonsCount.value} / {totalComparisons.max} comparisons</span
+				>{comparisonsCount.value} / {estimatedComparisons.max} comparisons</span
 			>
 		</div>
 		<div class="relative my-4">
@@ -126,8 +126,8 @@
 			</div>
 			<div
 				class="absolute -top-1 h-5 w-1 translate-x-[-50%] bg-accent-foreground"
-				style="left: {(totalComparisons.min / totalComparisons.max) * 100}%"
-				title="Best case: {totalComparisons.min} comparisons"
+				style="left: {(estimatedComparisons.min / estimatedComparisons.max) * 100}%"
+				title="Best case: {estimatedComparisons.min} comparisons"
 			></div>
 		</div>
 		<hr class="my-4" />
