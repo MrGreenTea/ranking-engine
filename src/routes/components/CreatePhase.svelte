@@ -104,6 +104,18 @@
 		>
 	</div>
 
+	<div class="flex gap-2">
+		<Input
+			type="text"
+			placeholder="Add an item..."
+			bind:value={newItem}
+			onkeydown={(e) => e.key === 'Enter' && addItem()}
+		/>
+		<Button disabled={!newItem} onclick={addItem} aria-label="Add">
+			<Plus class="h-4 w-4" />
+		</Button>
+	</div>
+
 	{#if items.value.length > 0}
 		<div class="mb-4 text-sm text-muted-foreground">
 			Estimated comparisons: {topK.value !== null && topK.value > 0
@@ -111,7 +123,7 @@
 				: estimateMergeSortComparisons(items.value.length)}
 		</div>
 		<ul class="mb-4 space-y-2">
-			{#each items.value as item (item)}
+			{#each items.value.slice().reverse() as item (item)}
 				<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
 					<Card class="flex items-center justify-between gap-3 p-3">
 						<p class="flex-1 text-sm">{item}</p>
@@ -141,16 +153,4 @@
 			{/each}
 		</ul>
 	{/if}
-
-	<div class="flex gap-2">
-		<Input
-			type="text"
-			placeholder="Add an item..."
-			bind:value={newItem}
-			onkeydown={(e) => e.key === 'Enter' && addItem()}
-		/>
-		<Button disabled={!newItem} onclick={addItem} aria-label="Add">
-			<Plus class="h-4 w-4" />
-		</Button>
-	</div>
 </Card>
