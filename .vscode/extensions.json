@@ -4,6 +4,7 @@
 		"svelte.svelte-vscode",
 		"dbaeumer.vscode-eslint",
 		"vitest.explorer",
-		"ms-playwright.playwright"
+		"ms-playwright.playwright",
+		"bradlc.vscode-tailwindcss"
 	]
 }
