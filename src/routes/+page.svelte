@@ -53,6 +53,7 @@
 		comparisonsCount.reset();
 		estimatedComparisons.reset();
 		comparisonCache.reset();
+		topK.reset();
 	}
 
 	$effect(() => {
