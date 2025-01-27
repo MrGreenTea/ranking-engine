@@ -6,6 +6,7 @@
 	import { mergeSort } from '$lib/sorting';
 	import { findTopK } from '$lib/top-k-selection';
 	import { onMount } from 'svelte';
+	import { Tween } from 'svelte/motion';
 
 	let {
 		comparisonCache,
@@ -24,11 +25,13 @@
 	} = $props();
 
 	let currentComparison = $state<null | { item1: string; item2: string }>(null);
-	let currentProgress = $derived(
-		Math.round((comparisonsCount.value / estimatedComparisons.max) * 100) || 0
-	);
 
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
+
+	let currentProgress = Tween.of(
+		() => Math.round((comparisonsCount.value / estimatedComparisons.max) * 100),
+		{ duration: 100 }
+	);
 
 	// Transitive closure of comparison
 	// if a < c and c < b, then a < b
@@ -121,11 +124,11 @@
 			<div class="h-3 w-full overflow-hidden rounded-full bg-secondary">
 				<div
 					class="h-full bg-primary transition-all duration-300"
-					style="width: {currentProgress}%"
+					style="width: {currentProgress.current}%"
 				></div>
 			</div>
 			<div
-				class="absolute -top-1 h-5 w-1 translate-x-[-50%] bg-accent-foreground"
+				class="absolute -top-1 h-5 w-1 translate-x-[-50%] bg-primary ring-2 ring-white"
 				style="left: {(estimatedComparisons.min / estimatedComparisons.max) * 100}%"
 				title="Best case: {estimatedComparisons.min} comparisons"
 			></div>
