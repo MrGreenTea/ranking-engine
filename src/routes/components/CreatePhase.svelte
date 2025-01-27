@@ -31,6 +31,7 @@
 	let dialogOpen = $state(false);
 	let newItem = $state('');
 	let importText = $state('');
+	let inputRef: HTMLInputElement | null = $state(null);
 	let estimatedComparisons = $derived(
 		topK.value !== null && topK.value > 0
 			? estimateTopKComparisons(items.value.length, topK.value)
@@ -46,6 +47,7 @@
 		if (trimmedItem && !items.value.includes(trimmedItem)) {
 			items.value = [...items.value, trimmedItem];
 			newItem = '';
+			inputRef?.focus();
 		}
 	}
 
@@ -114,6 +116,7 @@
 			bind:value={newItem}
 			onkeydown={(e) => e.key === 'Enter' && addItem()}
 			class="flex-1"
+			bind:ref={inputRef}
 		/>
 		<Button disabled={!newItem} onclick={addItem} aria-label="Add">
 			<Plus class="h-4 w-4" />
