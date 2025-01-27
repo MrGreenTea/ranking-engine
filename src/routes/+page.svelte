@@ -9,9 +9,10 @@
 
 	import ComparePhase from './components/ComparePhase.svelte';
 	import CreatePhase from './components/CreatePhase.svelte';
+	import InsertionPhase from './components/InsertionPhase.svelte';
 	import ResultPhase from './components/ResultPhase.svelte';
 
-	type Phase = 'compare' | 'create' | 'result';
+	type Phase = 'compare' | 'create' | 'insertion' | 'result';
 
 	let items = localStore<string[]>('ranking-items', []);
 	let sortedItems = localStore<string[]>('ranking-sorted-items', []);
@@ -19,6 +20,7 @@
 	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
 	let estimatedComparisons = localStore<number>('ranking-estimated-comparisons', 0);
 	let comparisonCache = localStore<Record<string, string[]>>('ranking-comparison-cache', {});
+	let newItem = $state<null | string>(null);
 
 	let phase = $state<Phase>('create');
 
@@ -87,9 +89,7 @@
 				>
 					<CreatePhase onStartSorting={startSorting} {items} {topK} />
 				</div>
-			{/if}
-
-			{#if phase === 'compare'}
+			{:else if phase === 'compare'}
 				<!-- Phase 2: Compare Items -->
 				<div
 					class="absolute inset-0 block w-full"
@@ -109,10 +109,26 @@
 						}}
 					/>
 				</div>
-			{/if}
-
-			<!-- Phase 3: Show Results -->
-			{#if phase === 'result'}
+			{:else if phase === 'insertion' && newItem !== null}
+				<!-- Phase 3: Insertion Items -->
+				<div
+					class="absolute inset-0 block w-full"
+					in:receive={{ key: 'phase' }}
+					out:send={{ key: 'phase' }}
+				>
+					<InsertionPhase
+						sortedItems={sortedItems.value}
+						{newItem}
+						{comparisonCache}
+						onInsertionFinished={(result) => {
+							sortedItems.value = result;
+							newItem = null;
+							phase = 'result';
+						}}
+					/>
+				</div>
+			{:else if phase === 'result'}
+				<!-- Phase 4: Show Results -->
 				<div
 					class="absolute block w-full"
 					in:receive={{ key: 'phase' }}
@@ -124,8 +140,10 @@
 						estimatedComparisons={estimatedComparisons.value}
 						sortedItems={sortedItems.value}
 						remainingItems={remainingItems.value}
-						bind:phase
-						{items}
+						onInsertNewItem={(i) => {
+							phase = 'insertion';
+							newItem = i;
+						}}
 					/>
 				</div>
 			{/if}

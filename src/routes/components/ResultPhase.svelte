@@ -1,27 +1,21 @@
 <script lang="ts">
-	import type { LocalStore } from '$lib/utils/storage.svelte';
-
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Card } from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
 	import { flip } from 'svelte/animate';
 	import { fade } from 'svelte/transition';
 
-	type Phase = 'compare' | 'create' | 'result';
-
 	let {
 		comparisonsCount,
 		estimatedComparisons,
-		items = $bindable(),
-		phase = $bindable(),
+		onInsertNewItem,
 		remainingItems,
 		sortedItems,
 		topK
 	}: {
 		comparisonsCount: number;
 		estimatedComparisons: number;
-		items: LocalStore<string[]>;
-		phase: Phase;
+		onInsertNewItem: (newItem: string) => void;
 		remainingItems: string[];
 		sortedItems: string[];
 		topK: null | number;
@@ -45,10 +39,7 @@
 	async function insertNewItem() {
 		const trimmedItem = insertItem.trim();
 		if (trimmedItem && !sortedItems.includes(trimmedItem)) {
-			phase = 'compare';
-			// TODO: reimplement binary insert
-			items.value = [...items.value, trimmedItem];
-			insertItem = '';
+			onInsertNewItem(trimmedItem);
 		}
 	}
 </script>
