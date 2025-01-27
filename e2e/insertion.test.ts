@@ -16,7 +16,7 @@ import { enterItems, randomItemList, sortItems } from './helpers';
 		// enter randomized items
 		await enterItems(page, items);
 
-		await page.getByRole('button', { name: 'Start Sorting' }).click();
+		await page.getByRole('button', { name: 'Start' }).click();
 		await sortItems(page);
 
 		await page.getByPlaceholder('Insert new item').fill(newItem);

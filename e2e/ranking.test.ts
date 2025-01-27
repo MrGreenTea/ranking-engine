@@ -25,7 +25,7 @@ test.describe.configure({ mode: 'parallel' });
 
 		await enterItems(page, items);
 
-		await page.getByRole('button', { name: 'Start Sorting' }).click();
+		await page.getByRole('button', { name: 'Start' }).click();
 		await sortItems(page);
 
 		// we sort the items alphabetically to better understand the output
@@ -45,9 +45,9 @@ test.describe.configure({ mode: 'parallel' });
 		// enter randomized items
 		await enterItems(page, items);
 
-		await page.getByPlaceholder('Top K items (optional)').fill(i.toString());
+		await page.getByLabel('Top X items only').fill(i.toString());
 
-		await page.getByRole('button', { name: 'Start Sorting' }).click();
+		await page.getByRole('button', { name: 'Start' }).click();
 		await sortItems(page);
 
 		// we sort the items alphabetically to better understand the output
@@ -68,7 +68,7 @@ test('Never ask the same comparison twice', async ({ page }) => {
 
 	const seenPairs: [string, string][] = [];
 
-	await page.getByRole('button', { name: 'Start Sorting' }).click();
+	await page.getByRole('button', { name: 'Start' }).click();
 
 	await sortItems(page, {
 		beforeComparison: (i1, i2) => {
@@ -94,8 +94,8 @@ test('Never ask the same comparison twice (top-k)', async ({ page }) => {
 
 	const seenPairs: [string, string][] = [];
 
-	await page.getByPlaceholder('Top K items (optional)').fill('3');
-	await page.getByRole('button', { name: 'Start Sorting' }).click();
+	await page.getByLabel('Top X items only').fill('3');
+	await page.getByRole('button', { name: 'Start' }).click();
 
 	await sortItems(page, {
 		beforeComparison: (i1, i2) => {
@@ -120,10 +120,11 @@ test('Never ask the same comparison twice (top-k)', async ({ page }) => {
 		await page.goto('/');
 		await enterItems(page, items);
 
-		const deuplicatedItems = [...new Set(items)];
+		// we show items in reverse added order
+		const deuplicatedItems = [...new Set(items)].reverse();
 		await expect(page.getByRole('listitem')).toContainText(deuplicatedItems);
 
-		await page.getByRole('button', { name: 'Start Sorting' }).click();
+		await page.getByRole('button', { name: 'Start' }).click();
 
 		await sortItems(page, {
 			beforeComparison: (button1Content, button2Content) => {

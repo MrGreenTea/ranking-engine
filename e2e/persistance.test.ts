@@ -11,12 +11,12 @@ test('reloading the page keeps the list', async ({ page }) => {
 	// enter randomized items
 	await enterItems(page, items);
 
-	const actualComparisonText = await page.getByText('Estimated comparisons').textContent();
+	const actualComparisonText = await page.getByText('comparisons').textContent();
 
 	await page.reload();
 
-	await expect(page.getByRole('listitem')).toContainText(items);
-	await expect(page.getByText('Estimated comparisons')).toContainText(actualComparisonText!);
+	await expect(page.getByRole('listitem')).toContainText(items.reverse());
+	await expect(page.getByText('comparisons')).toContainText(actualComparisonText!);
 });
 
 test('Clear all button works after entering items', async ({ page }) => {
@@ -39,16 +39,16 @@ test('reloading the page keeps the sorted list', async ({ page }) => {
 	// enter randomized items
 	await enterItems(page, items);
 
-	await page.getByRole('button', { name: 'Start Sorting' }).click();
+	await page.getByRole('button', { name: 'Start' }).click();
 
 	await sortItems(page);
 
-	const sortedItems = await page.getByTestId('sorted-item').allInnerTexts();
-	const actualComparisonText = await page.getByText('Actual comparisons').textContent();
+	const sortedItems = await page.getByRole('listitem').allTextContents();
+	const actualComparisonText = await page.getByText(/Took \d+ comparisons/).textContent();
 	await page.reload();
 
 	await expect(page.getByRole('listitem')).toContainText(sortedItems);
-	await expect(page.getByText('Actual comparisons')).toContainText(actualComparisonText!);
+	await expect(page.getByText(/Took \d+ comparisons/)).toContainText(actualComparisonText!);
 });
 
 test('reloading the page keeps the top k list', async ({ page }) => {
@@ -59,17 +59,17 @@ test('reloading the page keeps the top k list', async ({ page }) => {
 	// enter randomized items
 	await enterItems(page, items);
 
-	await page.getByPlaceholder('Top K items (optional)').fill('2');
-	await page.getByRole('button', { name: 'Start Sorting' }).click();
+	await page.getByLabel('Top X items only').fill('2');
+	await page.getByRole('button', { name: 'Start' }).click();
 
 	await sortItems(page);
 
-	const sortedItems = await page.getByRole('listitem').allInnerTexts();
-	const actualComparisonText = await page.getByText('Actual comparisons').textContent();
+	const sortedItems = await page.getByRole('listitem').allTextContents();
+	const actualComparisonText = await page.getByText(/Took \d+ comparisons/).textContent();
 	await page.reload();
 
 	await expect(page.getByRole('listitem')).toContainText(sortedItems);
-	await expect(page.getByText('Actual comparisons')).toContainText(actualComparisonText!);
+	await expect(page.getByText(/Took \d+ comparisons/)).toContainText(actualComparisonText!);
 });
 
 test('reloading the page after inserting an item keeps the list', async ({ page }) => {
@@ -80,11 +80,9 @@ test('reloading the page after inserting an item keeps the list', async ({ page 
 	// enter randomized items
 	await enterItems(page, items);
 
-	await page.getByRole('button', { name: 'Start Sorting' }).click();
-	// we don't care about the actual order
-	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
-		await page.getByTestId('comparison-buttons').getByRole('button').first().click();
-	}
+	await page.getByRole('button', { name: 'Start' }).click();
+
+	await sortItems(page);
 
 	const newItem = faker.word.noun();
 	await page.getByPlaceholder('Insert new item').fill(newItem);
@@ -93,10 +91,10 @@ test('reloading the page after inserting an item keeps the list', async ({ page 
 	// we don't care about the actual order
 	await sortItems(page);
 
-	const sortedItems = await page.getByRole('listitem').allInnerTexts();
-	const actualComparisonText = await page.getByText('Actual comparisons').textContent();
+	const sortedItems = await page.getByRole('listitem').allTextContents();
+	const actualComparisonText = await page.getByText(/Took \d+ comparisons/).textContent();
 	await page.reload();
 
 	await expect(page.getByRole('listitem')).toContainText(sortedItems);
-	await expect(page.getByText('Actual comparisons')).toContainText(actualComparisonText!);
+	await expect(page.getByText(/Took \d+ comparisons/)).toContainText(actualComparisonText!);
 });
