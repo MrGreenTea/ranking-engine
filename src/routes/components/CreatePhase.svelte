@@ -31,6 +31,11 @@
 	let dialogOpen = $state(false);
 	let newItem = $state('');
 	let importText = $state('');
+	let estimatedComparisons = $derived(
+		topK.value !== null && topK.value > 0
+			? estimateTopKComparisons(items.value.length, topK.value)
+			: estimateMergeSortComparisons(items.value.length)
+	);
 
 	function removeItem(item: string) {
 		items.value = items.value.filter((i) => i !== item);
@@ -98,10 +103,15 @@
 		</div>
 	</div>
 
-	<div class="mb-6 flex justify-center">
+	<div class="mb-6 flex flex-col items-center justify-center gap-2">
 		<Button disabled={items.value.length < 2} onclick={onStartSorting} class="w-48"
 			>Start Sorting</Button
 		>
+		{#if items.value.length > 0}
+			<div class="text-sm text-muted-foreground">
+				Estimated comparisons: {estimatedComparisons}
+			</div>
+		{/if}
 	</div>
 
 	<div class="flex gap-2">
@@ -117,12 +127,7 @@
 	</div>
 
 	{#if items.value.length > 0}
-		<div class="mb-4 text-sm text-muted-foreground">
-			Estimated comparisons: {topK.value !== null && topK.value > 0
-				? estimateTopKComparisons(items.value.length, topK.value)
-				: estimateMergeSortComparisons(items.value.length)}
-		</div>
-		<ul class="mb-4 space-y-2">
+		<ul class="space-y-2 px-2 py-4">
 			{#each items.value.slice().reverse() as item (item)}
 				<li animate:flip={{ duration: 300 }} transition:fade={{ duration: 200 }}>
 					<Card class="flex items-center justify-between gap-3 p-3">
