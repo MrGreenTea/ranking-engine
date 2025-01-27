@@ -1,10 +1,11 @@
 type CompareFunction<T> = (a: T, b: T) => Promise<number>;
 
-export function estimateMergeSortComparisons(n: number): number {
-	if (n <= 1) return 0;
+export function estimateMergeSortComparisons(n: number): { max: number; min: number } {
+	if (n <= 1) return { max: 0, min: 0 };
 	// Expected comparisons for merge sort is n * log2(n)
 	const log2n = Math.ceil(Math.log2(n));
-	return n * log2n - Math.pow(2, log2n) + 1;
+	const max = n * log2n - Math.pow(2, log2n) + 1;
+	return { max, min: Math.ceil(max / 2) };
 }
 
 export async function mergeSort<T>(arr: T[], compare: CompareFunction<T>): Promise<T[]> {

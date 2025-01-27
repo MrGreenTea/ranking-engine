@@ -7,14 +7,12 @@
 
 	let {
 		comparisonsCount,
-		estimatedComparisons,
 		onInsertNewItem,
 		remainingItems,
 		sortedItems,
 		topK
 	}: {
 		comparisonsCount: number;
-		estimatedComparisons: number;
 		onInsertNewItem: (newItem: string) => void;
 		remainingItems: string[];
 		sortedItems: string[];
@@ -73,7 +71,7 @@
 			</Button>
 		</div>
 		<div class="space-y-1 text-sm text-muted-foreground">
-			<p>Actual comparisons: {comparisonsCount} / {estimatedComparisons}</p>
+			<p>Took {comparisonsCount} comparisons</p>
 		</div>
 	</div>
 

@@ -4,7 +4,6 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import { mergeSort } from '$lib/sorting';
-	import { estimateMergeSortComparisons } from '$lib/sorting';
 	import { findTopK } from '$lib/top-k-selection';
 	import { onMount } from 'svelte';
 
@@ -13,19 +12,20 @@
 		comparisonsCount,
 		items,
 		onSortingFinished,
-		topK
+		topK,
+		totalComparisons
 	}: {
 		comparisonCache: LocalStore<Record<string, string[]>>;
 		comparisonsCount: LocalStore<number>;
 		items: string[];
 		onSortingFinished: (top: string[], rest: string[], comparisonsCount: number) => void;
 		topK: null | number;
+		totalComparisons: { max: number; min: number };
 	} = $props();
 
 	let currentComparison = $state<null | { item1: string; item2: string }>(null);
-	let totalComparisons = $state(0);
 	let currentProgress = $derived(
-		Math.round((comparisonsCount.value / totalComparisons) * 100) || 0
+		Math.round((comparisonsCount.value / totalComparisons.max) * 100) || 0
 	);
 
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
@@ -91,7 +91,6 @@
 
 	onMount(() => {
 		window.addEventListener('keydown', handleKeydown);
-		totalComparisons = estimateMergeSortComparisons(items.length);
 		return () => {
 			window.removeEventListener('keydown', handleKeydown);
 		};
@@ -115,11 +114,21 @@
 		<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
 		<div class="flex items-center justify-between">
 			<span class="text-sm text-muted-foreground"
-				>{comparisonsCount.value} / {totalComparisons} comparisons</span
+				>{comparisonsCount.value} / {totalComparisons.max} comparisons</span
 			>
 		</div>
-		<div class="my-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
-			<div class="h-full bg-primary transition-all" style="width: {currentProgress}%"></div>
+		<div class="relative my-4">
+			<div class="h-3 w-full overflow-hidden rounded-full bg-secondary">
+				<div
+					class="h-full bg-primary transition-all duration-300"
+					style="width: {currentProgress}%"
+				></div>
+			</div>
+			<div
+				class="absolute -top-1 h-5 w-1 translate-x-[-50%] bg-accent-foreground"
+				style="left: {(totalComparisons.min / totalComparisons.max) * 100}%"
+				title="Best case: {totalComparisons.min} comparisons"
+			></div>
 		</div>
 		<hr class="my-4" />
 		<p class="mb-4 text-sm text-muted-foreground">Click on the item you prefer:</p>

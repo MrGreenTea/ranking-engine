@@ -18,7 +18,10 @@
 	let sortedItems = localStore<string[]>('ranking-sorted-items', []);
 	let remainingItems = localStore<string[]>('ranking-remaining-items', []);
 	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
-	let estimatedComparisons = localStore<number>('ranking-estimated-comparisons', 0);
+	let estimatedComparisons = localStore<{ max: number; min: number }>(
+		'ranking-estimated-comparisons',
+		{ max: 0, min: 0 }
+	);
 	let comparisonCache = localStore<Record<string, string[]>>('ranking-comparison-cache', {});
 	let newItem = $state<null | string>(null);
 
@@ -107,6 +110,7 @@
 							comparisonsCount.value = comparisons;
 							phase = 'result';
 						}}
+						totalComparisons={estimatedComparisons.value}
 					/>
 				</div>
 			{:else if phase === 'insertion' && newItem !== null}
@@ -137,7 +141,6 @@
 					<ResultPhase
 						topK={topK.value}
 						comparisonsCount={comparisonsCount.value}
-						estimatedComparisons={estimatedComparisons.value}
 						sortedItems={sortedItems.value}
 						remainingItems={remainingItems.value}
 						onInsertNewItem={(i) => {

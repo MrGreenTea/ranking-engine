@@ -4,15 +4,19 @@ import { estimateMergeSortComparisons, mergeSort } from './sorting';
 /* Asynchronous compare function just like in Array.sort */
 type CompareFunction<T> = (a: T, b: T) => Promise<number>;
 
-export function estimateTopKComparisons(n: number, k: number): number {
+export function estimateTopKComparisons(n: number, k: number): { max: number; min: number } {
 	if (n <= k) return estimateMergeSortComparisons(n);
 	// For top-k:
 	// 1. First k items: k * log(k) for initial heap
 	// 2. Remaining n-k items: each needs 1 comparison with smallest + log(k) if larger
 	// We assume ~half of remaining items will be larger than smallest in heap
-	const initialHeapComparisons = k * Math.log2(k);
+	const initialHeapComparisons = estimateMergeSortComparisons(k);
 	const remainingItemsComparisons = n - k + ((n - k) / 2) * Math.log2(k);
-	return Math.ceil(initialHeapComparisons + remainingItemsComparisons);
+	return {
+		max: Math.ceil(initialHeapComparisons.max + remainingItemsComparisons),
+		// best case: already sorted
+		min: Math.ceil(initialHeapComparisons.min + n - k)
+	};
 }
 
 export async function findTopK<T>(

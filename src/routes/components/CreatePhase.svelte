@@ -107,9 +107,9 @@
 		<Button disabled={items.value.length < 2} onclick={onStartSorting} class="w-48"
 			>Start Sorting</Button
 		>
-		{#if items.value.length > 0}
+		{#if items.value.length > 2}
 			<div class="text-sm text-muted-foreground">
-				Estimated comparisons: {estimatedComparisons}
+				{estimatedComparisons.min} - {estimatedComparisons.max} comparisons
 			</div>
 		{/if}
 	</div>
