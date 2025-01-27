@@ -80,14 +80,22 @@
 		<div class="phase-container relative min-h-[200px]">
 			<!-- Phase 1: Create List -->
 			{#if phase === 'create'}
-				<div class="block w-full" in:receive={{ key: 'phase' }} out:send={{ key: 'phase' }}>
+				<div
+					class="absolute block w-full"
+					in:receive={{ key: 'phase' }}
+					out:send={{ key: 'phase' }}
+				>
 					<CreatePhase onStartSorting={startSorting} {items} {topK} />
 				</div>
 			{/if}
 
 			{#if phase === 'compare'}
 				<!-- Phase 2: Compare Items -->
-				<div class="block w-full" in:receive={{ key: 'phase' }} out:send={{ key: 'phase' }}>
+				<div
+					class="absolute inset-0 block w-full"
+					in:receive={{ key: 'phase' }}
+					out:send={{ key: 'phase' }}
+				>
 					<ComparePhase
 						topK={topK.value}
 						items={items.value}
@@ -105,7 +113,11 @@
 
 			<!-- Phase 3: Show Results -->
 			{#if phase === 'result'}
-				<div class="block w-full" in:receive={{ key: 'phase' }} out:send={{ key: 'phase' }}>
+				<div
+					class="absolute block w-full"
+					in:receive={{ key: 'phase' }}
+					out:send={{ key: 'phase' }}
+				>
 					<ResultPhase
 						topK={topK.value}
 						comparisonsCount={comparisonsCount.value}
@@ -120,12 +132,3 @@
 		</div>
 	</div>
 </main>
-
-<style>
-	.phase-container > :global(*) {
-		position: absolute;
-		top: 0;
-		left: 0;
-		right: 0;
-	}
-</style>
