@@ -9,7 +9,7 @@
 		comparisonsCount,
 		onInsertNewItem,
 		remainingItems,
-		sortedItems,
+		sortedItems = $bindable(),
 		topK
 	}: {
 		comparisonsCount: number;

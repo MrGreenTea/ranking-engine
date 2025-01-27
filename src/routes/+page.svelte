@@ -136,7 +136,7 @@
 					<ResultPhase
 						topK={topK.value}
 						comparisonsCount={comparisonsCount.value}
-						sortedItems={sortedItems.value}
+						bind:sortedItems={sortedItems.value}
 						remainingItems={remainingItems.value}
 						onInsertNewItem={(i) => {
 							phase = 'insertion';
