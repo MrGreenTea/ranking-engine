@@ -1,18 +1,14 @@
 <script lang="ts">
-	import type { LocalStore } from '$lib/utils/storage.svelte';
-
 	import { binaryInsert } from '$lib/binary-insert';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import { onMount, tick } from 'svelte';
 
 	let {
-		comparisonCache,
 		newItem,
 		onInsertionFinished,
 		sortedItems
 	}: {
-		comparisonCache: LocalStore<Record<string, string[]>>;
 		newItem: string;
 		onInsertionFinished: (result: string[]) => void;
 		sortedItems: string[];
@@ -25,47 +21,17 @@
 
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 
-	// Transitive closure of comparison
-	// if a < c and c < b, then a < b
-	// same with b < c and c < a then b < a
-	function transitiveComparison(a: string, b: string): number | undefined {
-		// Direct check in cache
-		let cacheA = comparisonCache.value[a];
-		if (cacheA?.includes(b)) return -1;
-
-		let cacheB = comparisonCache.value[b];
-		if (cacheB?.includes(a)) return 1;
-
-		return undefined;
-	}
-
 	async function compareItems(a: string, b: string): Promise<number> {
-		const cached = transitiveComparison(a, b);
-		if (cached !== undefined) {
-			console.log('Using cached comparison', cached, 'for pair', a, 'and', b);
-			console.debug(comparisonCache.value);
-			return cached;
-		}
-
 		currentComparison = { item1: a, item2: b };
 		const choice = await new Promise<string>((resolve) => {
 			resolveCurrentComparison = resolve;
 		});
 		currentComparison = null;
 		resolveCurrentComparison = null;
+
 		if (choice === a) {
-			const cacheA = comparisonCache.value[a] ?? [];
-			comparisonCache.value = {
-				...comparisonCache.value,
-				[a]: [...cacheA, b]
-			};
 			return -1;
 		} else {
-			const cacheB = comparisonCache.value[b] ?? [];
-			comparisonCache.value = {
-				...comparisonCache.value,
-				[b]: [...cacheB, a]
-			};
 			return 1;
 		}
 	}

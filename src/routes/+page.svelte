@@ -20,7 +20,6 @@
 
 	let topK = localStore<null | number>('ranking-top-k', null);
 	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
-	let comparisonCache = localStore<Record<string, string[]>>('ranking-comparison-cache', {});
 	let newItem = $state<null | string>(null);
 
 	let phase = $state<Phase>('create');
@@ -55,13 +54,11 @@
 		sortedItems.reset();
 		remainingItems.reset();
 		comparisonsCount.reset();
-		comparisonCache.reset();
 		topK.reset();
 	}
 	async function startSorting() {
 		if (items.value.length < 2) return;
 		phase = 'compare';
-		comparisonCache.reset();
 	}
 </script>
 
@@ -97,7 +94,6 @@
 					<ComparePhase
 						topK={topK.value}
 						items={items.value}
-						{comparisonCache}
 						{comparisonsCount}
 						onSortingFinished={(top, rest, comparisons) => {
 							sortedItems.value = top;
@@ -118,7 +114,6 @@
 					<InsertionPhase
 						sortedItems={sortedItems.value}
 						{newItem}
-						{comparisonCache}
 						onInsertionFinished={(result) => {
 							sortedItems.value = result;
 							newItem = null;
