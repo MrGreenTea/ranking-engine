@@ -50,10 +50,12 @@
 	}
 
 	function importItems() {
-		const newItems = importText
-			.split('\n')
-			.map((item) => item.trim())
-			.filter((item) => item.length > 0 && !items.value.includes(item));
+		const newItems = new Set(
+			importText
+				.split('\n')
+				.map((item) => item.trim())
+				.filter((item) => item.length > 0 && !items.value.includes(item))
+		);
 
 		items.value = [...items.value, ...newItems];
 		importText = '';
@@ -62,29 +64,48 @@
 </script>
 
 <Card class="p-6">
-	<div class="mb-6 flex items-center justify-between">
+	<div class="flex items-center justify-between">
 		<h2 class="text-xl font-semibold">Items to Rank</h2>
-		<div class="flex items-center gap-4">
+	</div>
+
+	<div class="flex min-h-20 justify-between gap-2 pt-4">
+		<div class="relative">
+			<label
+				class="absolute -top-2 left-2 inline-block rounded-lg bg-white px-1 text-xs font-medium text-muted-foreground"
+				for="top-k"
+			>
+				Top X items only
+			</label>
 			<Input
 				type="number"
 				min="1"
-				placeholder="Top K items (optional)"
+				placeholder="(optional)"
 				bind:value={topK.value}
-				class="w-48"
+				class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+				id="top-k"
+				name="top-k"
 			/>
+		</div>
+		<div>
+			<Button disabled={items.value.length < 2} onclick={onStartSorting} class="w-48">Start</Button>
+
+			{#if items.value.length > 2}
+				<div
+					transition:fade={{ duration: 100 }}
+					class="p-1 text-center text-sm text-muted-foreground"
+				>
+					{#if estimatedComparisons.min == estimatedComparisons.max}
+						{estimatedComparisons.min}
+					{:else}
+						{estimatedComparisons.min} - {estimatedComparisons.max}
+					{/if}
+					comparisons
+				</div>
+			{/if}
 		</div>
 	</div>
 
-	<div class="mb-6 flex flex-col items-center justify-center gap-2">
-		<Button disabled={items.value.length < 2} onclick={onStartSorting} class="w-48"
-			>Start Sorting</Button
-		>
-		{#if items.value.length > 2}
-			<div class="text-sm text-muted-foreground">
-				{estimatedComparisons.min} - {estimatedComparisons.max} comparisons
-			</div>
-		{/if}
-	</div>
+	<hr class="my-6" />
 
 	<div class="flex gap-2">
 		<Input
