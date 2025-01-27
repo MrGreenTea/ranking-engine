@@ -72,34 +72,6 @@
 				bind:value={topK.value}
 				class="w-48"
 			/>
-			<Dialog bind:open={dialogOpen}>
-				<DialogTrigger>
-					<div
-						class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-					>
-						Import
-					</div>
-				</DialogTrigger>
-				<DialogContent>
-					<DialogHeader>
-						<DialogTitle>Import Items</DialogTitle>
-					</DialogHeader>
-					<div class="space-y-4">
-						<Textarea
-							placeholder="Enter items, one per line"
-							bind:value={importText}
-							rows={10}
-							onkeydown={(e) => {
-								if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-									e.preventDefault();
-									importItems();
-								}
-							}}
-						/>
-						<Button onclick={importItems} class="w-full">Import Items</Button>
-					</div>
-				</DialogContent>
-			</Dialog>
 		</div>
 	</div>
 
@@ -120,10 +92,39 @@
 			placeholder="Add an item..."
 			bind:value={newItem}
 			onkeydown={(e) => e.key === 'Enter' && addItem()}
+			class="flex-1"
 		/>
 		<Button disabled={!newItem} onclick={addItem} aria-label="Add">
 			<Plus class="h-4 w-4" />
 		</Button>
+		<Dialog bind:open={dialogOpen}>
+			<DialogTrigger>
+				<div
+					class="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+				>
+					Import
+				</div>
+			</DialogTrigger>
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Import Items</DialogTitle>
+				</DialogHeader>
+				<div class="space-y-4">
+					<Textarea
+						placeholder="Enter items, one per line"
+						bind:value={importText}
+						rows={10}
+						onkeydown={(e) => {
+							if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+								e.preventDefault();
+								importItems();
+							}
+						}}
+					/>
+					<Button onclick={importItems} class="w-full">Import Items</Button>
+				</div>
+			</DialogContent>
+		</Dialog>
 	</div>
 
 	{#if items.value.length > 0}
