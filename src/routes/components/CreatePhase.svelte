@@ -167,6 +167,7 @@
 							onclick={() => removeItem(item)}
 							variant="ghost"
 							class="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+							size="icon"
 						>
 							<svg
 								xmlns="http://www.w3.org/2000/svg"
