@@ -220,13 +220,17 @@
 				</div>
 				<div class="space-y-2">
 					<label for="ranking" class="text-sm font-medium">
+						Paste your ranked items (one per line) -
 						{#if rankings.value.length === 0}
-							Paste your ranked items (one per line) - This will define the item set
+							This will define the item set
 						{:else}
-							Paste your ranked items (one per line) - Must match the original set:
-							<div class="mt-1 text-sm text-muted-foreground">
-								{rankings.value[0].items.join(', ')}
-							</div>
+							Must match the original set
+							<a
+								href="#{rankings.value[0].userId}"
+								class="italic hover:text-blue-500 hover:underline"
+							>
+								({rankings.value[0].name})
+							</a>
 						{/if}
 					</label>
 					<Textarea
@@ -324,7 +328,7 @@
 				<h2 class="mb-4 text-xl font-semibold">Individual Rankings</h2>
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{#each rankings.value as ranking (ranking.userId)}
-						<div class="relative space-y-2" transition:slide>
+						<div id={ranking.userId} class="relative space-y-2" transition:slide>
 							<div class="flex items-center justify-between">
 								<div>
 									{#if editingNameId === ranking.userId}
