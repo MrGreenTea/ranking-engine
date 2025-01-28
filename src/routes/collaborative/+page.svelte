@@ -43,6 +43,8 @@
 	let validationError = $state<null | ValidationError>(null);
 	let editingNameId = $state<null | string>(null);
 	let editingNameValue = $state('');
+	let hoveredItem = $state<null | string>(null);
+	let expandedItem = $state<string>();
 
 	const sortOptions: { label: string; value: SortBy }[] = [
 		{ label: 'Borda Count', value: 'borda' },
@@ -271,9 +273,18 @@
 					</Select>
 				</div>
 				<div class="space-y-2">
-					<Accordion type="single">
+					<Accordion type="single" bind:value={expandedItem}>
 						{#each calculateStats() as stat (stat.item)}
-							<div animate:flip={{ duration: 300 }}>
+							<div
+								animate:flip={{ duration: 300 }}
+								onmouseover={() => (hoveredItem = stat.item)}
+								onfocusin={() => (hoveredItem = stat.item)}
+								onfocusout={() => (hoveredItem = null)}
+								onfocus={() => (hoveredItem = stat.item)}
+								onmouseout={() => (hoveredItem = null)}
+								onblur={() => (hoveredItem = null)}
+								role="listitem"
+							>
 								<AccordionItem value={stat.item}>
 									<AccordionTrigger>
 										<div class="flex w-full items-center justify-between pr-2">
@@ -435,7 +446,12 @@
 							</div>
 							<ol class="list-decimal pl-6">
 								{#each ranking.items as item}
-									<li>{item}</li>
+									<li
+										class:bg-muted={item === expandedItem ||
+											(!expandedItem && item === hoveredItem)}
+									>
+										{item}
+									</li>
 								{/each}
 							</ol>
 						</div>
