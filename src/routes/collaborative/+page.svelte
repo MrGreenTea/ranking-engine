@@ -20,6 +20,7 @@
 	};
 
 	type ItemStats = {
+		bordaPoints: number;
 		item: string;
 		max: number;
 		median: number;
@@ -27,7 +28,7 @@
 		spread: number;
 	};
 
-	type SortBy = 'max' | 'median' | 'min' | 'spread';
+	type SortBy = 'borda' | 'max' | 'median' | 'min' | 'spread';
 
 	type ValidationError = {
 		extra: string[];
@@ -35,15 +36,18 @@
 	};
 
 	let rankings = localStore<Ranking[]>('collaborative-rankings', []);
-	let sortBy = localStore<SortBy>('collaborative-sort-by', 'median');
+	let sortBy = localStore<SortBy>('collaborative-sort-by', 'borda');
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
 	let newRankingName = $state('');
 	let validationError = $state<null | ValidationError>(null);
 	let editingNameId = $state<null | string>(null);
 	let editingNameValue = $state('');
+	let hoveredItem = $state<null | string>(null);
+	let expandedItem = $state<string>();
 
 	const sortOptions: { label: string; value: SortBy }[] = [
+		{ label: 'Borda Count', value: 'borda' },
 		{ label: 'Median Position', value: 'median' },
 		{ label: 'Best Position', value: 'min' },
 		{ label: 'Worst Position', value: 'max' },
@@ -109,22 +113,43 @@
 	function calculateStats(): ItemStats[] {
 		if (rankings.value.length === 0) return [];
 
-		const stats: ItemStats[] = rankings.value[0].items.map((item) => {
-			const positions = rankings.value.map((ranking) => ranking.items.indexOf(item) + 1);
-			const sorted = positions.sort((a, b) => a - b);
-			const mid = Math.floor(sorted.length / 2);
-			const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+		const items = rankings.value[0].items;
+		const stats: ItemStats[] = [];
 
-			return {
+		// Calculate positions and Borda Count for each item
+		for (const item of items) {
+			const positions: number[] = [];
+			let bordaPoints = 0;
+			const n = items.length; // Number of items
+
+			for (const ranking of rankings.value) {
+				const position = ranking.items.indexOf(item);
+				positions.push(position);
+				// Borda Count: n-1 points for first place, n-2 for second, etc.
+				bordaPoints += n - 1 - position;
+			}
+
+			positions.sort((a, b) => a - b);
+			const mid = Math.floor(positions.length / 2);
+
+			stats.push({
+				bordaPoints: bordaPoints,
 				item,
-				max: sorted[sorted.length - 1],
-				median,
-				min: sorted[0],
-				spread: sorted[sorted.length - 1] - sorted[0]
-			};
-		});
+				max: positions[positions.length - 1],
+				median:
+					positions.length % 2 === 0 ? (positions[mid - 1] + positions[mid]) / 2 : positions[mid],
+				min: positions[0],
+				spread: positions[positions.length - 1] - positions[0]
+			});
+		}
 
-		return stats.sort((a, b) => a[sortBy.value] - b[sortBy.value]);
+		// Sort based on selected criteria
+		return stats.sort((a, b) => {
+			if (sortBy.value === 'borda') {
+				return b.bordaPoints - a.bordaPoints;
+			}
+			return a[sortBy.value] - b[sortBy.value];
+		});
 	}
 
 	function removeRanking(userId: string) {
@@ -197,13 +222,17 @@
 				</div>
 				<div class="space-y-2">
 					<label for="ranking" class="text-sm font-medium">
+						Paste your ranked items (one per line) -
 						{#if rankings.value.length === 0}
-							Paste your ranked items (one per line) - This will define the item set
+							This will define the item set
 						{:else}
-							Paste your ranked items (one per line) - Must match the original set:
-							<div class="mt-1 text-sm text-muted-foreground">
-								{rankings.value[0].items.join(', ')}
-							</div>
+							Must match the original set
+							<a
+								href="#{rankings.value[0].userId}"
+								class="italic hover:text-blue-500 hover:underline"
+							>
+								({rankings.value[0].name})
+							</a>
 						{/if}
 					</label>
 					<Textarea
@@ -244,22 +273,33 @@
 					</Select>
 				</div>
 				<div class="space-y-2">
-					<Accordion type="single">
+					<Accordion type="single" bind:value={expandedItem}>
 						{#each calculateStats() as stat (stat.item)}
-							<div animate:flip={{ duration: 300 }}>
+							<div
+								animate:flip={{ duration: 300 }}
+								onmouseover={() => (hoveredItem = stat.item)}
+								onfocusin={() => (hoveredItem = stat.item)}
+								onfocusout={() => (hoveredItem = null)}
+								onfocus={() => (hoveredItem = stat.item)}
+								onmouseout={() => (hoveredItem = null)}
+								onblur={() => (hoveredItem = null)}
+								role="listitem"
+							>
 								<AccordionItem value={stat.item}>
 									<AccordionTrigger>
-										<div class="flex w-full items-center justify-between pr-4">
-											<span>{stat.item}</span>
-											<span class="text-sm font-medium">
+										<div class="flex w-full items-center justify-between pr-2">
+											<span class="max-w-52 text-left lg:max-w-72">{stat.item}</span>
+											<span class="text-right text-sm font-medium">
 												{#if sortBy.value === 'median'}
-													Median: {stat.median.toFixed(1)}
+													{stat.median.toFixed(1)}
 												{:else if sortBy.value === 'min'}
-													Best: {stat.min}
+													{stat.min}
 												{:else if sortBy.value === 'max'}
-													Worst: {stat.max}
+													{stat.max}
+												{:else if sortBy.value === 'borda'}
+													{stat.bordaPoints}
 												{:else}
-													Spread: {stat.spread}
+													{stat.spread}
 												{/if}
 											</span>
 										</div>
@@ -282,6 +322,10 @@
 												<span class="text-muted-foreground">Spread:</span>
 												<span class="font-medium">{stat.spread}</span>
 											</div>
+											<div>
+												<span class="text-muted-foreground">Borda:</span>
+												<span class="font-medium">{stat.bordaPoints}</span>
+											</div>
 										</div>
 									</AccordionContent>
 								</AccordionItem>
@@ -295,7 +339,7 @@
 				<h2 class="mb-4 text-xl font-semibold">Individual Rankings</h2>
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{#each rankings.value as ranking (ranking.userId)}
-						<div class="relative space-y-2" transition:slide>
+						<div id={ranking.userId} class="relative space-y-2" transition:slide>
 							<div class="flex items-center justify-between">
 								<div>
 									{#if editingNameId === ranking.userId}
@@ -402,7 +446,12 @@
 							</div>
 							<ol class="list-decimal pl-6">
 								{#each ranking.items as item}
-									<li>{item}</li>
+									<li
+										class:bg-muted={item === expandedItem ||
+											(!expandedItem && item === hoveredItem)}
+									>
+										{item}
+									</li>
 								{/each}
 							</ol>
 						</div>
