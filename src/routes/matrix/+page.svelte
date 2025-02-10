@@ -1,13 +1,9 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
+	import * as HoverCard from '$lib/components/ui/hover-card';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { localStore } from '$lib/utils/storage.svelte';
-	import Chart from 'chart.js/auto';
-	import { onMount } from 'svelte';
-
-	let chartCanvas = $state<HTMLCanvasElement>();
-	let chart: Chart;
 
 	type Ranking = {
 		items: string[];
@@ -84,7 +80,6 @@
 		newRanking = '';
 		newRankingName = '';
 		currentAxis = 'y';
-		updateChart();
 	}
 
 	function clearAll() {
@@ -93,113 +88,18 @@
 		newRanking = '';
 		newRankingName = '';
 		currentAxis = 'x';
-		if (chart) {
-			chart.destroy();
-		}
 	}
 
-	function getPositionInRanking(items: string[]): Record<string, number> {
-		return items.reduce((acc, item, index) => ({ ...acc, [item]: index }), {});
-	}
+	const matrixData: { label: string; x: number; y: number }[] = $derived.by(() => {
+		if (rankings.value.length < 2) return [];
+		const [firstRanking, secondRanking] = rankings.value;
 
-	function updateChart() {
-		if (rankings.value.length < 2) return;
-		if (!chartCanvas) return;
-		if (chart) {
-			chart.destroy();
-		}
-
-		const ctx = chartCanvas.getContext('2d');
-		if (!ctx) return;
-
-		const firstRanking = rankings.value[0];
-		const secondRanking = rankings.value[1];
-
-		const firstPositions = getPositionInRanking(firstRanking.items);
-		const secondPositions = getPositionInRanking(secondRanking.items);
-
-		const matrixData = firstRanking.items.map((item) => ({
+		return firstRanking.items.map((item) => ({
 			label: item,
-			x: firstPositions[item],
-			y: secondPositions[item]
+			// 1-indexed to not overlap with the border
+			x: firstRanking.items.indexOf(item) + 1,
+			y: secondRanking.items.indexOf(item) + 1
 		}));
-
-		chart = new Chart(ctx, {
-			data: {
-				datasets: [
-					{
-						backgroundColor: 'rgb(99, 102, 241)',
-						borderColor: 'rgb(79, 82, 221)',
-						data: matrixData,
-						pointHoverRadius: 8,
-						pointRadius: 5
-					}
-				]
-			},
-			options: {
-				maintainAspectRatio: false,
-				plugins: {
-					legend: {
-						display: false
-					},
-					tooltip: {
-						callbacks: {
-							label: (context) => {
-								const dataPoint = context.raw as (typeof matrixData)[number];
-								return `${dataPoint.label} (${dataPoint.x}, ${dataPoint.y})`;
-							}
-						}
-					}
-				},
-				responsive: true,
-				scales: {
-					x: {
-						max: firstRanking.items.length + 0.5,
-						min: -1.5,
-						reverse: true,
-						ticks: {
-							display: false,
-							stepSize: secondRanking.items.length / 2
-						},
-						title: {
-							display: true,
-							text: firstRanking.name
-						}
-					},
-					y: {
-						max: secondRanking.items.length + 0.5,
-						min: -1.5,
-						reverse: true,
-						ticks: {
-							display: false,
-							stepSize: secondRanking.items.length / 2
-						},
-						title: {
-							display: true,
-							text: secondRanking.name
-						}
-					}
-				}
-			},
-			type: 'scatter'
-		});
-	}
-
-	$effect(() => {
-		if (rankings.value.length >= 2) {
-			updateChart();
-		}
-	});
-
-	onMount(() => {
-		if (rankings.value.length >= 2) {
-			updateChart();
-		}
-		return () => {
-			if (chart) {
-				chart.destroy();
-			}
-		};
 	});
 </script>
 
@@ -279,9 +179,41 @@
 		{#if rankings.value.length >= 2}
 			<Card class="p-6">
 				<h2 class="mb-4 text-xl font-semibold">Matrix View</h2>
-				<div class="h-[600px] w-full">
-					<canvas bind:this={chartCanvas}></canvas>
+				<div class="relative h-[600px] flex-1 border-2 border-indigo-50 p-2">
+					<div class="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 bg-indigo-50"></div>
+					<div class="absolute left-1/2 top-0 h-full w-2 -translate-x-1/2 bg-indigo-50"></div>
+					<div
+						class="relative h-full w-full"
+						style="grid-template-columns: repeat({matrixData.length}, 1fr); grid-template-rows: repeat({matrixData.length}, 1fr);"
+					>
+						{#each matrixData as data}
+							<div>
+								<HoverCard.Root openDelay={200}>
+									<HoverCard.Trigger
+										aria-label={data.label}
+										class=" absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-500 text-white transition-all duration-100 hover:bg-indigo-600"
+										style="top: {(data.y / (matrixData.length + 1)) * 100}%; 
+									left: {(data.x / (matrixData.length + 1)) * 100}%;"
+									></HoverCard.Trigger>
+									<HoverCard.Content>{data.label}</HoverCard.Content>
+								</HoverCard.Root>
+							</div>
+						{/each}
+					</div>
+
+					<h3
+						class="text-vertical absolute -right-7 top-1/2 -translate-y-1/2 text-center text-lg font-semibold"
+					>
+						{rankings.value[1].name}
+					</h3>
+
+					<h3
+						class="absolute -bottom-10 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-lg font-semibold"
+					>
+						{rankings.value[0].name}
+					</h3>
 				</div>
+
 				<p class="mt-4 text-sm text-gray-600">
 					Items are positioned based on their rank in both lists. The top-right corner represents
 					items ranked highly in both lists.
@@ -308,3 +240,10 @@
 		{/if}
 	</div>
 </div>
+
+<style>
+	.text-vertical {
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
+	}
+</style>
