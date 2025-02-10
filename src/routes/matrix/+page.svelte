@@ -4,6 +4,8 @@
 	import * as HoverCard from '$lib/components/ui/hover-card';
 	import { Textarea } from '$lib/components/ui/textarea';
 	import { localStore } from '$lib/utils/storage.svelte';
+	import { flip } from 'svelte/animate';
+	import { fade } from 'svelte/transition';
 
 	type Ranking = {
 		items: string[];
@@ -17,8 +19,7 @@
 
 	type Cell = {
 		label: string;
-		x: number;
-		y: number;
+		position: { x: number; y: number };
 	};
 
 	let rankings = localStore<Ranking[]>('matrix-rankings', []);
@@ -116,29 +117,22 @@
 		return firstRankingItems.map((item) => ({
 			label: item,
 			// 1-indexed to not overlap with the border
-			x: firstRankingItems.indexOf(item) + 1,
-			y: secondRanking.items.indexOf(item) + 1
+			position: {
+				x: firstRankingItems.indexOf(item),
+				y: secondRanking.items.indexOf(item)
+			}
 		}));
 	});
 
 	function cellHighlightStyle(data: Cell): string[] {
-		// upper-right
-		if (data.x > matrixData.length / 2 + 1 && data.y < matrixData.length / 2 + 1)
+		const rightHalf = data.position.x > matrixData.length / 2;
+		const upperHalf = data.position.y < matrixData.length / 2;
+
+		if (rightHalf && upperHalf)
 			return ['hover:bg-green-600', hoveredCell === data.label ? 'bg-green-600' : 'bg-green-400'];
-		// lower-right
-		if (data.x >= matrixData.length / 2 + 1 && data.y >= matrixData.length / 2 + 1)
-			return [
-				'hover:bg-indigo-600',
-				hoveredCell === data.label ? 'bg-indigo-600' : 'bg-indigo-400'
-			];
-		// upper-left
-		if (data.x <= matrixData.length / 2 + 1 && data.y <= matrixData.length / 2 + 1)
-			return [
-				'hover:bg-indigo-600',
-				hoveredCell === data.label ? 'bg-indigo-600' : 'bg-indigo-400'
-			];
-		// lower-left
-		return ['hover:bg-gray-600', hoveredCell === data.label ? 'bg-gray-600' : 'bg-gray-400'];
+		if (!rightHalf && !upperHalf)
+			return ['hover:bg-gray-600', hoveredCell === data.label ? 'bg-gray-600' : 'bg-gray-400'];
+		return ['hover:bg-indigo-600', hoveredCell === data.label ? 'bg-indigo-600' : 'bg-indigo-400'];
 	}
 </script>
 
@@ -235,40 +229,43 @@
 							class="absolute left-1/2 top-0 z-10 h-full w-1 -translate-x-1/2 bg-indigo-100"
 						></div>
 
-						<div
-							class="relative z-20 grid h-full w-full"
-							style="grid-template-columns: repeat({matrixData.length + 1}, 1fr);
-							 grid-template-rows: repeat({matrixData.length + 1}, 1fr);"
-						>
-							{#each matrixData as data}
-								<HoverCard.Root openDelay={200}>
-									<HoverCard.Trigger
-										onmouseenter={() => (hoveredCell = data.label)}
-										onmouseleave={() => (hoveredCell = null)}
-										aria-label={data.label}
-										style="grid-column-start: {data.x}; grid-row-start: {data.y};"
-										class={[
-											'h-full w-full rounded-full transition-all duration-100',
-											cellHighlightStyle(data)
-										]}
-									></HoverCard.Trigger>
-									<HoverCard.Content>{data.label}</HoverCard.Content>
-								</HoverCard.Root>
+						<div class="relative z-20 h-full w-full">
+							{#each matrixData as data (data.label)}
+								<div
+									animate:flip={{ duration: 300 }}
+									class="absolute h-2 w-2 overflow-hidden rounded-full transition-all duration-100 hover:scale-150"
+									style="left: {(data.position.x / matrixData.length) * 100}%;
+										 top: {(data.position.y / matrixData.length) * 100}%;"
+								>
+									<HoverCard.Root openDelay={200}>
+										<HoverCard.Trigger
+											onmouseenter={() => (hoveredCell = data.label)}
+											onmouseleave={() => (hoveredCell = null)}
+											aria-label={data.label}
+											class={['block h-full w-full', cellHighlightStyle(data)]}
+										></HoverCard.Trigger>
+										<HoverCard.Content>{data.label}</HoverCard.Content>
+									</HoverCard.Root>
+								</div>
 							{/each}
 						</div>
 					</div>
-
-					<h3
-						class="text-vertical absolute -right-10 top-1/2 hidden -translate-y-1/2 text-center text-lg font-semibold md:block"
-					>
-						{rankings.value[1].name}
-					</h3>
-
-					<h3
-						class="absolute -top-6 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 text-center text-lg font-semibold md:block"
-					>
-						{rankings.value[0].name}
-					</h3>
+					{#key rankings.value[0].name}
+						<h3
+							transition:fade={{ duration: 200 }}
+							class="absolute -top-8 left-1/2 hidden -translate-x-1/2 text-lg font-semibold md:block"
+						>
+							{rankings.value[0].name}
+						</h3>
+					{/key}
+					{#key rankings.value[1].name}
+						<h3
+							transition:fade={{ duration: 200 }}
+							class="text-vertical absolute -right-6 top-1/2 hidden -translate-y-1/2 text-lg font-semibold md:block"
+						>
+							{rankings.value[1].name}
+						</h3>
+					{/key}
 				</div>
 
 				<p class="mx-8 mt-8 max-w-prose text-sm text-gray-600">
