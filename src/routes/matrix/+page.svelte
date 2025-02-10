@@ -121,17 +121,24 @@
 		}));
 	});
 
-	function cellInQuadrant(
-		data: Cell,
-		quadrant: 'lower-left' | 'lower-right' | 'upper-left' | 'upper-right'
-	): boolean {
+	function cellHighlightStyle(data: Cell): string[] {
+		// upper-right
 		if (data.x > matrixData.length / 2 + 1 && data.y < matrixData.length / 2 + 1)
-			return quadrant === 'upper-right';
+			return ['hover:bg-green-600', hoveredCell === data.label ? 'bg-green-600' : 'bg-green-400'];
+		// lower-right
 		if (data.x >= matrixData.length / 2 + 1 && data.y >= matrixData.length / 2 + 1)
-			return quadrant === 'lower-right';
+			return [
+				'hover:bg-indigo-600',
+				hoveredCell === data.label ? 'bg-indigo-600' : 'bg-indigo-400'
+			];
+		// upper-left
 		if (data.x <= matrixData.length / 2 + 1 && data.y <= matrixData.length / 2 + 1)
-			return quadrant === 'upper-left';
-		return quadrant === 'lower-left';
+			return [
+				'hover:bg-indigo-600',
+				hoveredCell === data.label ? 'bg-indigo-600' : 'bg-indigo-400'
+			];
+		// lower-left
+		return ['hover:bg-gray-600', hoveredCell === data.label ? 'bg-gray-600' : 'bg-gray-400'];
 	}
 </script>
 
@@ -210,10 +217,9 @@
 
 		{#if rankings.value.length >= 2}
 			<Card class="mx-auto px-6 py-8 md:col-span-2 md:px-20">
-				<h2 class="text-xl font-semibold">Matrix View</h2>
 				<div class="relative">
 					<div
-						class="relative mx-auto mt-12 aspect-square w-full max-w-[600px] border-2 border-indigo-50 p-2"
+						class="relative mx-auto mt-12 aspect-square w-full max-w-[600px] overflow-hidden rounded-md border-2 border-indigo-50 p-2"
 					>
 						<!-- top right quadrant -->
 						<div class="absolute right-0 top-0 h-1/2 w-1/2 bg-green-50"></div>
@@ -243,12 +249,7 @@
 										style="grid-column-start: {data.x}; grid-row-start: {data.y};"
 										class={[
 											'h-full w-full rounded-full transition-all duration-100',
-											hoveredCell === data.label && 'bg-indigo-600',
-											cellInQuadrant(data, 'upper-right')
-												? 'bg-green-400 hover:bg-green-600'
-												: cellInQuadrant(data, 'lower-left')
-													? 'bg-gray-400 hover:bg-gray-600'
-													: 'bg-indigo-400 hover:bg-indigo-600'
+											cellHighlightStyle(data)
 										]}
 									></HoverCard.Trigger>
 									<HoverCard.Content>{data.label}</HoverCard.Content>
@@ -270,7 +271,7 @@
 					</h3>
 				</div>
 
-				<p class="mt-8 max-w-prose text-sm text-gray-600">
+				<p class="mx-8 mt-8 max-w-prose text-sm text-gray-600">
 					Items are positioned based on their rank in both lists. The top-right corner represents
 					items ranked highly in both lists.
 				</p>
