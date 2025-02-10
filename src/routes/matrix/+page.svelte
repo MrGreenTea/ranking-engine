@@ -179,25 +179,23 @@
 		{#if rankings.value.length >= 2}
 			<Card class="p-6">
 				<h2 class="mb-4 text-xl font-semibold">Matrix View</h2>
-				<div class="relative h-[600px] flex-1 border-2 border-indigo-50 p-2">
+				<div class="relative h-[600px] w-[600px] flex-1 border-2 border-indigo-50 p-2">
 					<div class="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 bg-indigo-50"></div>
 					<div class="absolute left-1/2 top-0 h-full w-2 -translate-x-1/2 bg-indigo-50"></div>
 					<div
-						class="relative h-full w-full"
-						style="grid-template-columns: repeat({matrixData.length}, 1fr); grid-template-rows: repeat({matrixData.length}, 1fr);"
+						class="relative z-10 grid h-full w-full"
+						style="grid-template-columns: repeat({matrixData.length + 1}, 1fr);
+							 grid-template-rows: repeat({matrixData.length + 1}, 1fr);"
 					>
 						{#each matrixData as data}
-							<div>
-								<HoverCard.Root openDelay={200}>
-									<HoverCard.Trigger
-										aria-label={data.label}
-										class=" absolute h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-500 text-white transition-all duration-100 hover:bg-indigo-600"
-										style="top: {(data.y / (matrixData.length + 1)) * 100}%; 
-									left: {(data.x / (matrixData.length + 1)) * 100}%;"
-									></HoverCard.Trigger>
-									<HoverCard.Content>{data.label}</HoverCard.Content>
-								</HoverCard.Root>
-							</div>
+							<HoverCard.Root openDelay={200}>
+								<HoverCard.Trigger
+									aria-label={data.label}
+									style="grid-column-start: {data.x}; grid-row-start: {data.y};"
+									class="h-full w-full rounded-full bg-indigo-400 text-white transition-all duration-100 hover:bg-indigo-600"
+								></HoverCard.Trigger>
+								<HoverCard.Content>{data.label}</HoverCard.Content>
+							</HoverCard.Root>
 						{/each}
 					</div>
 
