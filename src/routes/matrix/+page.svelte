@@ -6,7 +6,7 @@
 	import Chart from 'chart.js/auto';
 	import { onMount } from 'svelte';
 
-	let chartCanvas: HTMLCanvasElement;
+	let chartCanvas = $state<HTMLCanvasElement>();
 	let chart: Chart;
 
 	type Ranking = {
@@ -104,6 +104,7 @@
 
 	function updateChart() {
 		if (rankings.value.length < 2) return;
+		if (!chartCanvas) return;
 		if (chart) {
 			chart.destroy();
 		}
