@@ -8,12 +8,14 @@
 	let {
 		comparisonsCount,
 		onInsertNewItem,
+		onRestart,
 		remainingItems,
 		sortedItems = $bindable(),
 		topK
 	}: {
 		comparisonsCount: number;
 		onInsertNewItem: (newItem: string) => void;
+		onRestart: () => void;
 		remainingItems: string[];
 		sortedItems: string[];
 		topK: null | number;
@@ -45,13 +47,16 @@
 <Card class="p-6">
 	<div class="mb-4 space-y-2">
 		<div class="flex items-center justify-between">
-			<h2 class="text-xl font-semibold">
-				{#if topK !== null && topK > 0}
-					Top {topK} Items
-				{:else}
-					Sorted List
-				{/if}
-			</h2>
+			<div class="flex items-center gap-4">
+				<h2 class="text-xl font-semibold">
+					{#if topK !== null && topK > 0}
+						Top {topK} Items
+					{:else}
+						Sorted List
+					{/if}
+				</h2>
+				<Button onclick={onRestart} variant="outline" size="sm">Restart</Button>
+			</div>
 			<Button onclick={copyList} variant="outline" class="gap-2">
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

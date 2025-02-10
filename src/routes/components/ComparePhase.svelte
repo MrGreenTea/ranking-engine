@@ -12,18 +12,19 @@
 		comparisonsCount,
 		estimatedComparisons,
 		items,
+		onRestart,
 		onSortingFinished,
 		topK
 	}: {
 		comparisonsCount: LocalStore<number>;
 		estimatedComparisons: { max: number; min: number };
 		items: string[];
+		onRestart: () => void;
 		onSortingFinished: (top: string[], rest: string[], comparisonsCount: number) => void;
 		topK: null | number;
 	} = $props();
 
 	let currentComparison = $state<null | { item1: string; item2: string }>(null);
-
 	let resolveCurrentComparison: ((value: string) => void) | null = null;
 
 	let currentProgress = Tween.of(
@@ -48,6 +49,13 @@
 	function choose(winner: string) {
 		comparisonsCount.value++;
 		resolveCurrentComparison?.(winner);
+	}
+
+	function restart() {
+		currentComparison = null;
+		resolveCurrentComparison = null;
+		comparisonsCount.value = 0;
+		onRestart();
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -86,6 +94,7 @@
 			<span class="text-sm text-muted-foreground"
 				>{comparisonsCount.value} / {estimatedComparisons.max} comparisons</span
 			>
+			<Button onclick={restart} variant="outline" size="sm">Restart</Button>
 		</div>
 		<div class="relative my-4">
 			<div class="h-3 w-full overflow-hidden rounded-full bg-secondary">

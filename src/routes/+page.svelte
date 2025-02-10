@@ -60,6 +60,13 @@
 		if (items.value.length < 2) return;
 		phase = 'compare';
 	}
+
+	function restart() {
+		phase = 'create';
+		comparisonsCount.reset();
+		sortedItems.reset();
+		remainingItems.reset();
+	}
 </script>
 
 <main class="container mx-auto max-w-2xl p-4">
@@ -68,6 +75,9 @@
 			<h1 class="text-3xl font-bold">Ranking Engine</h1>
 			<div class="mt-2">
 				<a href="/collaborative" class="text-blue-500 hover:underline">Try Collaborative Ranking</a>
+			</div>
+			<div class="mt-2">
+				<a href="/matrix" class="text-blue-500 hover:underline">Try Visualization</a>
 			</div>
 		</div>
 		<Button onclick={clearAll} variant="destructive">Clear All</Button>
@@ -95,13 +105,14 @@
 						topK={topK.value}
 						items={items.value}
 						{comparisonsCount}
+						{estimatedComparisons}
+						onRestart={restart}
 						onSortingFinished={(top, rest, comparisons) => {
 							sortedItems.value = top;
 							remainingItems.value = rest;
 							comparisonsCount.value = comparisons;
 							phase = 'result';
 						}}
-						{estimatedComparisons}
 					/>
 				</div>
 			{:else if phase === 'insertion' && newItem !== null}
@@ -137,6 +148,7 @@
 							phase = 'insertion';
 							newItem = i;
 						}}
+						onRestart={restart}
 					/>
 				</div>
 			{/if}

@@ -137,3 +137,30 @@ test('Never ask the same comparison twice (top-k)', async ({ page }) => {
 		await expect(page.getByTestId('sorted-item')).toContainText(sortedItems);
 	});
 });
+
+test('Restart during ranking', async ({ page }) => {
+	await page.goto('/');
+
+	const items = randomItemList(4);
+	await enterItems(page, items);
+
+	await page.getByRole('button', { exact: true, name: 'Start' }).click();
+
+	await page.getByRole('button', { exact: true, name: 'Restart' }).click();
+
+	await page.getByRole('button', { exact: true, name: 'Start' }).isEnabled();
+});
+
+test('Restart after ranking', async ({ page }) => {
+	await page.goto('/');
+
+	const items = randomItemList(4);
+	await enterItems(page, items);
+
+	await page.getByRole('button', { exact: true, name: 'Start' }).click();
+	await sortItems(page);
+
+	await page.getByRole('button', { exact: true, name: 'Restart' }).click();
+
+	await page.getByRole('button', { exact: true, name: 'Start' }).isEnabled();
+});
