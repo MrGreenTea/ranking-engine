@@ -15,6 +15,12 @@
 		missing: string[];
 	};
 
+	type Cell = {
+		label: string;
+		x: number;
+		y: number;
+	};
+
 	let rankings = localStore<Ranking[]>('matrix-rankings', []);
 	let newRanking = $state('');
 	let newRankingName = $state('');
@@ -91,7 +97,11 @@
 		currentAxis = 'x';
 	}
 
-	const matrixData: { label: string; x: number; y: number }[] = $derived.by(() => {
+	function swapAxes() {
+		rankings.value.reverse();
+	}
+
+	const matrixData: Cell[] = $derived.by(() => {
 		if (rankings.value.length < 2) return [];
 		const [firstRanking, secondRanking] = rankings.value;
 
@@ -110,6 +120,19 @@
 			y: secondRanking.items.indexOf(item) + 1
 		}));
 	});
+
+	function cellInQuadrant(
+		data: Cell,
+		quadrant: 'lower-left' | 'lower-right' | 'upper-left' | 'upper-right'
+	): boolean {
+		if (data.x > matrixData.length / 2 + 1 && data.y < matrixData.length / 2 + 1)
+			return quadrant === 'upper-right';
+		if (data.x >= matrixData.length / 2 + 1 && data.y >= matrixData.length / 2 + 1)
+			return quadrant === 'lower-right';
+		if (data.x <= matrixData.length / 2 + 1 && data.y <= matrixData.length / 2 + 1)
+			return quadrant === 'upper-left';
+		return quadrant === 'lower-left';
+	}
 </script>
 
 <div class="container mx-auto p-4">
@@ -186,47 +209,68 @@
 		{/if}
 
 		{#if rankings.value.length >= 2}
-			<Card class="p-6">
-				<h2 class="mb-4 text-xl font-semibold">Matrix View</h2>
-				<div class="relative h-[600px] w-[600px] flex-1 border-2 border-indigo-50 p-2">
-					<div class="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 bg-indigo-50"></div>
-					<div class="absolute left-1/2 top-0 h-full w-2 -translate-x-1/2 bg-indigo-50"></div>
+			<Card class="mx-auto px-6 py-8 md:col-span-2 md:px-20">
+				<h2 class="text-xl font-semibold">Matrix View</h2>
+				<div class="relative">
 					<div
-						class="relative z-10 grid h-full w-full"
-						style="grid-template-columns: repeat({matrixData.length + 1}, 1fr);
-							 grid-template-rows: repeat({matrixData.length + 1}, 1fr);"
+						class="relative mx-auto mt-12 aspect-square w-full max-w-[600px] border-2 border-indigo-50 p-2"
 					>
-						{#each matrixData as data}
-							<HoverCard.Root openDelay={200}>
-								<HoverCard.Trigger
-									onmouseenter={() => (hoveredCell = data.label)}
-									onmouseleave={() => (hoveredCell = null)}
-									aria-label={data.label}
-									style="grid-column-start: {data.x}; grid-row-start: {data.y};"
-									class={[
-										'h-full w-full rounded-full bg-indigo-400 transition-all duration-100 hover:bg-indigo-600',
-										hoveredCell === data.label && 'bg-indigo-600'
-									]}
-								></HoverCard.Trigger>
-								<HoverCard.Content>{data.label}</HoverCard.Content>
-							</HoverCard.Root>
-						{/each}
+						<!-- top right quadrant -->
+						<div class="absolute right-0 top-0 h-1/2 w-1/2 bg-green-50"></div>
+						<!-- bottom left quadrant -->
+						<div class="absolute bottom-0 left-0 h-1/2 w-1/2 bg-gray-100"></div>
+
+						<!-- horizontal separator -->
+						<div
+							class="absolute left-0 top-1/2 z-10 h-1 w-full -translate-y-1/2 bg-indigo-100"
+						></div>
+						<!-- vertical separator -->
+						<div
+							class="absolute left-1/2 top-0 z-10 h-full w-1 -translate-x-1/2 bg-indigo-100"
+						></div>
+
+						<div
+							class="relative z-20 grid h-full w-full"
+							style="grid-template-columns: repeat({matrixData.length + 1}, 1fr);
+							 grid-template-rows: repeat({matrixData.length + 1}, 1fr);"
+						>
+							{#each matrixData as data}
+								<HoverCard.Root openDelay={200}>
+									<HoverCard.Trigger
+										onmouseenter={() => (hoveredCell = data.label)}
+										onmouseleave={() => (hoveredCell = null)}
+										aria-label={data.label}
+										style="grid-column-start: {data.x}; grid-row-start: {data.y};"
+										class={[
+											'h-full w-full rounded-full transition-all duration-100',
+											hoveredCell === data.label && 'bg-indigo-600',
+											cellInQuadrant(data, 'upper-right')
+												? 'bg-green-400 hover:bg-green-600'
+												: cellInQuadrant(data, 'lower-left')
+													? 'bg-gray-400 hover:bg-gray-600'
+													: 'bg-indigo-400 hover:bg-indigo-600'
+										]}
+									></HoverCard.Trigger>
+									<HoverCard.Content>{data.label}</HoverCard.Content>
+								</HoverCard.Root>
+							{/each}
+						</div>
 					</div>
 
 					<h3
-						class="text-vertical absolute -right-7 top-1/2 -translate-y-1/2 text-center text-lg font-semibold"
+						class="text-vertical absolute -right-10 top-1/2 hidden -translate-y-1/2 text-center text-lg font-semibold md:block"
 					>
 						{rankings.value[1].name}
 					</h3>
 
 					<h3
-						class="absolute -bottom-10 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-lg font-semibold"
+						class="absolute -top-6 left-1/2 hidden -translate-x-1/2 -translate-y-1/2 text-center text-lg font-semibold md:block"
 					>
 						{rankings.value[0].name}
 					</h3>
 				</div>
 
-				<p class="mt-4 text-sm text-gray-600">
+				<p class="mt-8 max-w-prose text-sm text-gray-600">
 					Items are positioned based on their rank in both lists. The top-right corner represents
 					items ranked highly in both lists.
 				</p>
@@ -236,6 +280,7 @@
 		{#if rankings.value.length > 0}
 			<Card class="p-6 {rankings.value.length < 2 ? '' : 'md:col-span-2'}">
 				<h2 class="mb-4 text-xl font-semibold">Current Rankings</h2>
+				<Button onclick={swapAxes}>Swap Axes</Button>
 				<div class="grid gap-4 md:grid-cols-2">
 					{#each rankings.value as ranking, i}
 						<div class="space-y-2">
