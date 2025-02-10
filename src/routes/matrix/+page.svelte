@@ -20,6 +20,7 @@
 	let newRankingName = $state('');
 	let validationError = $state<null | ValidationError>(null);
 	let currentAxis = $state<'x' | 'y'>('x');
+	let hoveredCell = $state<null | string>(null);
 
 	function validateRanking(items: string[]): null | ValidationError {
 		if (rankings.value.length === 0) return null; // First ranking defines the set
@@ -94,10 +95,18 @@
 		if (rankings.value.length < 2) return [];
 		const [firstRanking, secondRanking] = rankings.value;
 
-		return firstRanking.items.map((item) => ({
+		// to prevent modifying the original arrays, we make copies
+		// otherwise we get a reactivity loop
+		const firstRankingItems = [...firstRanking.items];
+
+		// we want the top right corner to be the highest rank in both lists
+		// but because x counts from the left and y from the top, we need to swap the coordinates
+		firstRankingItems.reverse();
+
+		return firstRankingItems.map((item) => ({
 			label: item,
 			// 1-indexed to not overlap with the border
-			x: firstRanking.items.indexOf(item) + 1,
+			x: firstRankingItems.indexOf(item) + 1,
 			y: secondRanking.items.indexOf(item) + 1
 		}));
 	});
@@ -190,9 +199,14 @@
 						{#each matrixData as data}
 							<HoverCard.Root openDelay={200}>
 								<HoverCard.Trigger
+									onmouseenter={() => (hoveredCell = data.label)}
+									onmouseleave={() => (hoveredCell = null)}
 									aria-label={data.label}
 									style="grid-column-start: {data.x}; grid-row-start: {data.y};"
-									class="h-full w-full rounded-full bg-indigo-400 text-white transition-all duration-100 hover:bg-indigo-600"
+									class={[
+										'h-full w-full rounded-full bg-indigo-400 transition-all duration-100 hover:bg-indigo-600',
+										hoveredCell === data.label && 'bg-indigo-600'
+									]}
 								></HoverCard.Trigger>
 								<HoverCard.Content>{data.label}</HoverCard.Content>
 							</HoverCard.Root>
@@ -228,7 +242,13 @@
 							<h3 class="font-medium">{i === 0 ? 'X-Axis: ' : 'Y-Axis: '}{ranking.name}</h3>
 							<ol class="list-inside list-decimal space-y-1">
 								{#each ranking.items as item}
-									<li>{item}</li>
+									<li
+										onmouseenter={() => (hoveredCell = item)}
+										onmouseleave={() => (hoveredCell = null)}
+										class:bg-muted={hoveredCell === item}
+									>
+										{item}
+									</li>
 								{/each}
 							</ol>
 						</div>
