@@ -18,8 +18,8 @@ importers:
         specifier: ^9.4.0
         version: 9.4.0
       '@fast-check/vitest':
-        specifier: ^0.1.4
-        version: 0.1.4(vitest@3.0.2)
+        specifier: ^0.1.5
+        version: 0.1.5(vitest@3.0.2)
       '@playwright/test':
         specifier: ^1.50.1
         version: 1.50.1
@@ -315,10 +315,10 @@ packages:
     resolution: {integrity: sha512-85+k0AxaZSTowL0gXp8zYWDIrWclTbRPg/pm/V0dSFZ6W6D4lhcG3uuZl4zLsEKfEvs69xDbLN2cHQudwp95JA==}
     engines: {node: '>=18.0.0', npm: '>=9.0.0'}
 
-  '@fast-check/vitest@0.1.4':
-    resolution: {integrity: sha512-Rb8r6Ok8uIE6Hi3P5bO9P6JMeFUSpRWaZs0ARmmZLgnh0oFyQ8ZXqln+530rFJ9TVRNjrQzk/kRBQCVyIEt46Q==}
+  '@fast-check/vitest@0.1.5':
+    resolution: {integrity: sha512-TxtdmzHFzHu1zLDc08SjJHH3jxxtf8oO/fZagsH3MXwkLu2bl0CSo6DWq03kNOxzd5uGT+jSUvZqFajy08+9sg==}
     peerDependencies:
-      vitest: '>=0.28.1 <1.0.0 || ^1 || ^2'
+      vitest: '>=0.28.1 <1.0.0 || ^1 || ^2 || ^3'
 
   '@floating-ui/core@1.6.9':
     resolution: {integrity: sha512-uMXCuQ3BItDUbAMhIXw7UPXRfAlOAvZzdK9BWpE60MCn+Svt3aLn9jsPTi/WNGlRUu2uI0v5S7JiIUsbsvh3fw==}
@@ -2178,7 +2178,7 @@ snapshots:
 
   '@faker-js/faker@9.4.0': {}
 
-  '@fast-check/vitest@0.1.4(vitest@3.0.2)':
+  '@fast-check/vitest@0.1.5(vitest@3.0.2)':
     dependencies:
       fast-check: 3.23.2
       vitest: 3.0.2(@types/node@22.10.7)(@vitest/browser@3.0.2)(msw@2.7.0(@types/node@22.10.7)(typescript@5.7.3))
