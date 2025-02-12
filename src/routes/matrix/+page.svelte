@@ -1,4 +1,7 @@
 <script lang="ts">
+	// Why we use -translate-x-1/2 -translate-y-1/2 so much:
+	// we want items to be anchored/centered in their middle and not the default top left corner
+	// otherwise we get weird positioning at the bottom right corner of the matrix for example.
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
@@ -242,9 +245,9 @@
 							{#each matrixData as data (data.label)}
 								<div
 									animate:flip={{ duration: 300 }}
-									class="absolute h-2 w-2 overflow-hidden rounded-full transition-all duration-100 hover:scale-150"
-									style="left: {(data.position.x / matrixData.length) * 100}%;
-										 top: {(data.position.y / matrixData.length) * 100}%;"
+									class="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full transition-all duration-100 hover:scale-150"
+									style="left: {(data.position.x / (matrixData.length - 1)) * 100}%;
+										 top: {(data.position.y / (matrixData.length - 1)) * 100}%;"
 								>
 									<HoverCard.Root openDelay={200}>
 										<HoverCard.Trigger
