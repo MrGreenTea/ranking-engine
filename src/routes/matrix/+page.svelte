@@ -23,7 +23,8 @@
 		position: { x: number; y: number };
 	};
 
-	let rankings = localStore<Ranking[]>('matrix-rankings', []);
+	const namespace = 'default';
+	let rankings = localStore<Ranking[]>(namespace, 'matrix-rankings', []);
 	let newRanking = $state('');
 	let newRankingName = $state('');
 	let validationError = $state<null | ValidationError>(null);

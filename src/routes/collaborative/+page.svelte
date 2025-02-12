@@ -36,8 +36,9 @@
 		missing: string[];
 	};
 
-	let rankings = localStore<Ranking[]>('collaborative-rankings', []);
-	let sortBy = localStore<SortBy>('collaborative-sort-by', 'borda');
+	const namespace = 'default';
+	let rankings = localStore<Ranking[]>(namespace, 'collaborative-rankings', []);
+	let sortBy = localStore<SortBy>(namespace, 'collaborative-sort-by', 'borda');
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
 	let newRankingName = $state('');

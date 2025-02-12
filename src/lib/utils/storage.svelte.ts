@@ -17,12 +17,12 @@ export class LocalStore<T> {
 	key = '';
 	value = $state<T>() as T;
 
-	constructor(key: StorageKey, value: T) {
+	constructor(namespace: string, key: StorageKey, value: T) {
 		this.key = key;
 		this.initialValue = value;
 
 		if (browser) {
-			const item = localStorage.getItem(key);
+			const item = localStorage.getItem(`${namespace}-${key}`);
 			if (item) {
 				this.value = this.deserialize(item);
 			} else {
@@ -33,7 +33,7 @@ export class LocalStore<T> {
 		}
 
 		$effect(() => {
-			localStorage.setItem(this.key, this.serialize(this.value));
+			localStorage.setItem(`${namespace}-${this.key}`, this.serialize(this.value));
 		});
 	}
 
@@ -50,6 +50,6 @@ export class LocalStore<T> {
 	}
 }
 
-export function localStore<T>(key: StorageKey, value: T) {
-	return new LocalStore(key, value);
+export function localStore<T>(namespace: string, key: StorageKey, value: T) {
+	return new LocalStore(namespace, key, value);
 }

@@ -15,12 +15,14 @@
 
 	type Phase = 'compare' | 'create' | 'insertion' | 'result';
 
-	let items = localStore<string[]>('ranking-items', []);
-	let sortedItems = localStore<string[]>('ranking-sorted-items', []);
-	let remainingItems = localStore<string[]>('ranking-remaining-items', []);
+	const namespace = 'default';
 
-	let topK = localStore<null | number>('ranking-top-k', null);
-	let comparisonsCount = localStore<number>('ranking-comparisons-count', 0);
+	let items = localStore<string[]>(namespace, 'ranking-items', []);
+	let sortedItems = localStore<string[]>(namespace, 'ranking-sorted-items', []);
+	let remainingItems = localStore<string[]>(namespace, 'ranking-remaining-items', []);
+
+	let topK = localStore<null | number>(namespace, 'ranking-top-k', null);
+	let comparisonsCount = localStore<number>(namespace, 'ranking-comparisons-count', 0);
 	let newItem = $state<null | string>(null);
 
 	let phase = $state<Phase>('create');
