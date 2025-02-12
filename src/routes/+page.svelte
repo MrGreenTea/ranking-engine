@@ -1,11 +1,12 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import * as Command from '$lib/components/ui/command';
 	import * as Dialog from '$lib/components/ui/dialog';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import * as Popover from '$lib/components/ui/popover';
 	import { estimateMergeSortComparisons } from '$lib/sorting';
 	import { estimateTopKComparisons } from '$lib/top-k-selection';
 	import { applicationStore, localStore } from '$lib/utils/storage.svelte';
+	import { Check, ChevronsUpDown, Plus, Trash } from 'lucide-svelte';
 	import { onMount } from 'svelte';
 	import { cubicOut } from 'svelte/easing';
 	import { crossfade } from 'svelte/transition';
@@ -21,12 +22,19 @@
 	let lists = applicationStore<string[]>('lists', [defaultList]);
 	let selectedList = applicationStore<string>('selected-list', lists.value[0]);
 
-	let items = localStore<string[]>(selectedList.value, 'ranking-items', []);
-	let sortedItems = localStore<string[]>(selectedList.value, 'ranking-sorted-items', []);
-	let remainingItems = localStore<string[]>(selectedList.value, 'ranking-remaining-items', []);
+	// TODO: I don't like that we have to derive the store...
+	// but without it the reactivity doesn't work
+	// maybe separating into components would help?
+	let items = $derived(localStore<string[]>(selectedList.value, 'ranking-items', []));
+	let sortedItems = $derived(localStore<string[]>(selectedList.value, 'ranking-sorted-items', []));
+	let remainingItems = $derived(
+		localStore<string[]>(selectedList.value, 'ranking-remaining-items', [])
+	);
+	let topK = $derived(localStore<null | number>(selectedList.value, 'ranking-top-k', null));
+	let comparisonsCount = $derived(
+		localStore<number>(selectedList.value, 'ranking-comparisons-count', 0)
+	);
 
-	let topK = localStore<null | number>(selectedList.value, 'ranking-top-k', null);
-	let comparisonsCount = localStore<number>(selectedList.value, 'ranking-comparisons-count', 0);
 	let newItem = $state<null | string>(null);
 
 	let phase = $state<Phase>('create');
@@ -55,31 +63,13 @@
 		easing: cubicOut
 	});
 
-	let showCreateList = $state(false);
-	let newListName = $state('');
-	let newListError = $state('');
-
-	function checkNewListName() {
-		if (!newListName) {
-			newListError = 'Please enter a list name';
-			return false;
-		}
+	function createList(newListName: string) {
 		if (lists.value.includes(newListName)) {
-			newListError = 'This list already exists';
-			return false;
+			return;
 		}
-		newListError = '';
-		return true;
-	}
-
-	function createList() {
-		if (!checkNewListName()) return;
 
 		lists.value = [...lists.value, newListName];
 		selectedList.value = newListName;
-
-		// close dialog
-		showCreateList = false;
 	}
 
 	function deleteList(list: string) {
@@ -132,6 +122,9 @@
 		sortedItems.reset();
 		remainingItems.reset();
 	}
+
+	let openListSelection = $state(false);
+	let searchedList = $state('');
 </script>
 
 <main class="container mx-auto max-w-2xl p-4">
@@ -139,45 +132,92 @@
 		<div>
 			<h1 class="text-3xl font-bold">Ranking Engine</h1>
 			<div class="mt-2 space-y-2">
-				<div class="flex flex-wrap gap-2">
-					{#each lists.value as list}
-						<Button
-							variant={selectedList.value === list ? 'default' : 'outline'}
-							onclick={() => {
-								selectedList.value = list;
-							}}
-							class="group relative"
-						>
-							{list}
-							{#if lists.value.length > 1}
-								<Dialog.Root>
-									<Dialog.Trigger
-										class="absolute -right-2 -top-2 hidden h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600 group-hover:flex"
-									>
-										x
-									</Dialog.Trigger>
+				<Popover.Root bind:open={openListSelection}>
+					<Popover.Trigger>
+						{#snippet child({ props })}
+							<Button
+								variant="outline"
+								class="w-64 justify-between"
+								{...props}
+								role="combobox"
+								aria-expanded={openListSelection}
+							>
+								{selectedList.value}
+								<ChevronsUpDown class="ml-2 size-4 shrink-0 opacity-50" />
+							</Button>
+						{/snippet}
+					</Popover.Trigger>
+					<Popover.Content class="w-64 p-0">
+						<Command.Root>
+							<Command.Input bind:value={searchedList} placeholder="Search..." />
+							<Command.List>
+								<Command.Group>
+									{#each lists.value as list}
+										<div class="group relative">
+											<Command.Item
+												value={list}
+												onSelect={() => {
+													selectedList.value = list;
+													openListSelection = false;
+												}}
+											>
+												<Check class={list !== selectedList.value ? 'text-transparent' : ''} />
+												{list}
+											</Command.Item>
 
-									<Dialog.Content>
-										<Dialog.Header>
-											<Dialog.Title>Delete List</Dialog.Title>
-										</Dialog.Header>
-										<Dialog.Description>
-											Are you sure you want to delete "{list}"? This action cannot be undone.
-										</Dialog.Description>
-										<Dialog.Footer>
-											<div class="flex justify-end gap-2">
-												<Dialog.Close variant="outline">Cancel</Dialog.Close>
-												<Dialog.Close variant="destructive" onclick={() => deleteList(list)}>
-													Delete
-												</Dialog.Close>
-											</div>
-										</Dialog.Footer>
-									</Dialog.Content>
-								</Dialog.Root>
-							{/if}
-						</Button>
-					{/each}
-				</div>
+											{#if lists.value.length > 1}
+												<Dialog.Root>
+													<Dialog.Trigger
+														class="absolute right-2 top-1/2 hidden h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-red-500 text-xs text-white hover:bg-red-600 group-hover:flex"
+													>
+														<Trash class="size-3" />
+													</Dialog.Trigger>
+
+													<Dialog.Content>
+														<Dialog.Header>
+															<Dialog.Title>Delete List</Dialog.Title>
+														</Dialog.Header>
+														<Dialog.Description>
+															Are you sure you want to delete "{list}"? This action cannot be
+															undone.
+														</Dialog.Description>
+														<Dialog.Footer>
+															<div class="flex justify-end gap-2">
+																<Dialog.Close variant="outline">Cancel</Dialog.Close>
+																<Dialog.Close
+																	variant="destructive"
+																	onclick={() => deleteList(list)}
+																>
+																	Delete
+																</Dialog.Close>
+															</div>
+														</Dialog.Footer>
+													</Dialog.Content>
+												</Dialog.Root>
+											{/if}
+										</div>
+									{/each}
+								</Command.Group>
+								<div class="flex w-full items-center justify-center px-2 py-3">
+									{#if searchedList}
+										<Button
+											disabled={lists.value.includes(searchedList)}
+											variant="outline"
+											onclick={() => {
+												createList(searchedList);
+												openListSelection = false;
+											}}
+										>
+											<Plus class="size-4" /> Create</Button
+										>
+									{:else}
+										<Button variant="outline" disabled></Button>
+									{/if}
+								</div>
+							</Command.List>
+						</Command.Root>
+					</Popover.Content>
+				</Popover.Root>
 			</div>
 			<div class="mt-2">
 				Try also
@@ -188,43 +228,6 @@
 		</div>
 
 		<div>
-			<Dialog.Root
-				bind:open={showCreateList}
-				onOpenChange={() => {
-					newListName = '';
-					newListError = '';
-				}}
-			>
-				<Dialog.Trigger>
-					{#snippet child({ props })}
-						<Button variant="outline" {...props}>New List</Button>
-					{/snippet}
-				</Dialog.Trigger>
-				<Dialog.Content>
-					<Dialog.Header>
-						<Dialog.Title>Create New List</Dialog.Title>
-						<Dialog.Description>Enter a unique name for your new list.</Dialog.Description>
-					</Dialog.Header>
-
-					<form onsubmit={() => createList()}>
-						<div class="grid gap-4 py-4">
-							<div class="grid gap-2">
-								<Label for="name">Name</Label>
-								<Input id="name" bind:value={newListName} oninput={() => checkNewListName()} />
-								{#if newListError}
-									<p class="text-sm text-red-500">{newListError}</p>
-								{/if}
-							</div>
-						</div>
-
-						<Dialog.Footer>
-							<Button disabled={newListError !== ''} type="submit" onclick={() => createList()}>
-								Create
-							</Button>
-						</Dialog.Footer>
-					</form>
-				</Dialog.Content>
-			</Dialog.Root>
 			<Dialog.Root>
 				<Dialog.Trigger>
 					{#snippet child({ props })}
