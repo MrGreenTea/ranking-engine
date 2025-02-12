@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { binaryInsert } from '$lib/binary-insert';
-	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import { onMount, tick } from 'svelte';
+	import { fade } from 'svelte/transition';
 
 	let {
 		newItem,
@@ -69,6 +69,19 @@
 	}
 </script>
 
+{#snippet ComparisonButton(item: string)}
+	<button
+		onclick={() => {
+			if (currentComparison != null) choose(item);
+		}}
+		class="grid h-full grid-cols-1 grid-rows-1 items-center gap-2 whitespace-nowrap text-wrap break-words rounded-md bg-primary px-4 py-2 text-lg font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+	>
+		{#key item}
+			<span transition:fade class="col-start-1 row-start-1">{item}</span>
+		{/key}
+	</button>
+{/snippet}
+
 <Card class="p-6">
 	{#await insert()}
 		<h2 class="mb-4 text-xl font-semibold">Compare items</h2>
@@ -87,26 +100,8 @@
 			data-testid="comparison-buttons"
 		>
 			{#if currentComparison != null}
-				{#key currentComparison.item1}
-					<Button
-						onclick={() => {
-							if (currentComparison != null) choose(currentComparison.item1);
-						}}
-						class="h-full text-wrap break-words text-lg"
-					>
-						{currentComparison.item1}
-					</Button>
-				{/key}
-				{#key currentComparison.item2}
-					<Button
-						onclick={() => {
-							if (currentComparison != null) choose(currentComparison.item2);
-						}}
-						class="h-full text-wrap break-words text-lg"
-					>
-						{currentComparison.item2}
-					</Button>
-				{/key}
+				{@render ComparisonButton(currentComparison.item1)}
+				{@render ComparisonButton(currentComparison.item2)}
 			{/if}
 		</div>
 	{:then}

@@ -41,9 +41,14 @@ export async function sortItems(
 	} = {}
 ) {
 	while (await page.getByRole('heading', { name: 'Compare items' }).isVisible()) {
+		await expect(page.getByTestId('comparison-buttons').getByRole('button')).toHaveCount(2);
 		const [button1Content, button2Content] = await page
 			.getByTestId('comparison-buttons')
 			.getByRole('button')
+			// because of the animation multiple texts will be visible
+			// instead of waiting for the animation to finish
+			// we assume the last text is the most recent one
+			.locator('span:last-child')
 			.allInnerTexts();
 
 		// if one of the buttons is not visible, we are done
