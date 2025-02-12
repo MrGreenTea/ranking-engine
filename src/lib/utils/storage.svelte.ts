@@ -1,5 +1,7 @@
 import { browser } from '$app/environment';
 
+type ApplicationStorageKey = 'lists' | 'selected-list';
+
 type StorageKey =
 	| 'collaborative-rankings'
 	| 'collaborative-sort-by'
@@ -17,7 +19,7 @@ export class LocalStore<T> {
 	key = '';
 	value = $state<T>() as T;
 
-	constructor(namespace: string, key: StorageKey, value: T) {
+	constructor(namespace: string, key: string, value: T) {
 		this.key = key;
 		this.initialValue = value;
 
@@ -48,6 +50,10 @@ export class LocalStore<T> {
 	serialize(value: T): string {
 		return JSON.stringify(value);
 	}
+}
+
+export function applicationStore<T>(key: ApplicationStorageKey, value: T) {
+	return new LocalStore('', key, value);
 }
 
 export function localStore<T>(namespace: string, key: StorageKey, value: T) {
