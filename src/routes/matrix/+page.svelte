@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { Card } from '$lib/components/ui/card';
 	import * as HoverCard from '$lib/components/ui/hover-card';
@@ -90,6 +91,7 @@
 		currentAxis = 'y';
 	}
 
+	let showClearConfirm = $state(false);
 	function clearAll() {
 		rankings.reset();
 		validationError = null;
@@ -139,7 +141,13 @@
 <div class="container mx-auto p-4">
 	<div class="mb-8 flex items-center justify-between">
 		<h1 class="text-3xl font-bold">Matrix Visualization</h1>
-		<Button onclick={clearAll} variant="destructive">Clear All</Button>
+		<Button onclick={() => (showClearConfirm = true)} variant="destructive">Clear All</Button>
+		<ConfirmDialog
+			bind:open={showClearConfirm}
+			title="Clear all rankings?"
+			description="This will remove all your rankings and matrix data. This action cannot be undone."
+			onConfirm={clearAll}
+		/>
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-2">

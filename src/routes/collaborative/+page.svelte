@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import {
 		Accordion,
 		AccordionContent,
@@ -156,6 +157,7 @@
 		rankings.value = rankings.value.filter((r) => r.userId !== userId);
 	}
 
+	let showClearConfirm = $state(false);
 	function clearAll() {
 		rankings.reset();
 		sortBy.reset();
@@ -203,7 +205,13 @@
 <main class="container mx-auto max-w-4xl p-4">
 	<div class="mb-8 flex items-center justify-between">
 		<h1 class="text-3xl font-bold">Collaborative Ranking</h1>
-		<Button onclick={clearAll} variant="destructive">Clear All</Button>
+		<Button onclick={() => (showClearConfirm = true)} variant="destructive">Clear All</Button>
+		<ConfirmDialog
+			bind:open={showClearConfirm}
+			title="Clear all collaborative rankings?"
+			description="This will remove all rankings and reset the sorting preferences. This action cannot be undone."
+			onConfirm={clearAll}
+		/>
 	</div>
 
 	<div class="grid gap-8 md:grid-cols-2">

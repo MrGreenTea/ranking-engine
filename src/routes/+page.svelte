@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import { estimateMergeSortComparisons } from '$lib/sorting';
 	import { estimateTopKComparisons } from '$lib/top-k-selection';
@@ -48,6 +49,7 @@
 		easing: cubicOut
 	});
 
+	let showClearConfirm = $state(false);
 	function clearAll() {
 		phase = 'create';
 		items.reset();
@@ -80,7 +82,13 @@
 				<a href="/matrix" class="text-blue-500 hover:underline">Try Visualization</a>
 			</div>
 		</div>
-		<Button onclick={clearAll} variant="destructive">Clear All</Button>
+		<Button onclick={() => (showClearConfirm = true)} variant="destructive">Clear All</Button>
+		<ConfirmDialog
+			bind:open={showClearConfirm}
+			title="Clear all data?"
+			description="This will remove all your items and rankings. This action cannot be undone."
+			onConfirm={clearAll}
+		/>
 	</div>
 
 	<div class="space-y-8">
