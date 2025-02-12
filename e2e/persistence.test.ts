@@ -28,6 +28,8 @@ test('Clear all button works after entering items', async ({ page }) => {
 	await enterItems(page, items);
 
 	await page.getByRole('button', { name: 'Clear all' }).click();
+	// Confirming the dialog
+	await page.getByRole('button', { name: 'Continue' }).click();
 	await expect(page.getByRole('listitem')).toBeHidden();
 });
 
