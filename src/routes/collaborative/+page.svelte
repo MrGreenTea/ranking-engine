@@ -21,15 +21,17 @@
 	};
 
 	type ItemStats = {
-		bordaPoints: number;
 		item: string;
+		stats: {
+		bordaPoints: number;
 		max: number;
 		median: number;
 		min: number;
 		spread: number;
+	}
 	};
 
-	type SortBy = 'borda' | 'max' | 'median' | 'min' | 'spread';
+	type SortBy = keyof ItemStats['stats'];
 
 	type ValidationError = {
 		extra: string[];
@@ -38,7 +40,7 @@
 
 	const namespace = 'default';
 	let rankings = localStore<Ranking[]>(namespace, 'collaborative-rankings', []);
-	let sortBy = localStore<SortBy>(namespace, 'collaborative-sort-by', 'borda');
+	let sortBy = localStore<SortBy>(namespace, 'collaborative-sort-by', 'bordaPoints');
 	let userId = $state(crypto.randomUUID());
 	let newRanking = $state('');
 	let newRankingName = $state('');
@@ -49,7 +51,7 @@
 	let expandedItem = $state<string>();
 
 	const sortOptions: { label: string; value: SortBy }[] = [
-		{ label: 'Borda Count', value: 'borda' },
+		{ label: 'Borda Count', value: 'bordaPoints' },
 		{ label: 'Median Position', value: 'median' },
 		{ label: 'Best Position', value: 'min' },
 		{ label: 'Worst Position', value: 'max' },
@@ -126,7 +128,8 @@
 
 			for (const ranking of rankings.value) {
 				const position = ranking.items.indexOf(item);
-				positions.push(position);
+				// display 1-indexed positions
+				positions.push(position + 1);
 				// Borda Count: n-1 points for first place, n-2 for second, etc.
 				bordaPoints += n - 1 - position;
 			}
@@ -135,22 +138,29 @@
 			const mid = Math.floor(positions.length / 2);
 
 			stats.push({
-				bordaPoints: bordaPoints,
 				item,
+				stats: {
+				bordaPoints: bordaPoints,
 				max: positions[positions.length - 1],
 				median:
 					positions.length % 2 === 0 ? (positions[mid - 1] + positions[mid]) / 2 : positions[mid],
 				min: positions[0],
-				spread: positions[positions.length - 1] - positions[0]
+				spread: positions[positions.length - 1] - positions[0]}
 			});
 		}
 
 		// Sort based on selected criteria
 		return stats.sort((a, b) => {
-			if (sortBy.value === 'borda') {
-				return b.bordaPoints - a.bordaPoints;
+			const result = a.stats[sortBy.value] - b.stats[sortBy.value];
+			if (result === 0) {
+				// break ties by borda count (descending)
+				return b.stats.bordaPoints - a.stats.bordaPoints;
 			}
-			return a[sortBy.value] - b[sortBy.value];
+			// Borda count should sort descending, all others ascending
+			if (sortBy.value === 'bordaPoints') {
+				return -result;
+			}
+			return result;
 		});
 	}
 
@@ -283,32 +293,32 @@
 				</div>
 				<div class="space-y-2">
 					<Accordion type="single" bind:value={expandedItem}>
-						{#each calculateStats() as stat (stat.item)}
+						{#each calculateStats() as item (item.item)}
 							<div
 								animate:flip={{ duration: 300 }}
-								onmouseover={() => (hoveredItem = stat.item)}
-								onfocusin={() => (hoveredItem = stat.item)}
+								onmouseover={() => (hoveredItem = item.item)}
+								onfocusin={() => (hoveredItem = item.item)}
 								onfocusout={() => (hoveredItem = null)}
-								onfocus={() => (hoveredItem = stat.item)}
+								onfocus={() => (hoveredItem = item.item)}
 								onmouseout={() => (hoveredItem = null)}
 								onblur={() => (hoveredItem = null)}
 								role="listitem"
 							>
-								<AccordionItem value={stat.item}>
+								<AccordionItem value={item.item}>
 									<AccordionTrigger>
 										<div class="flex w-full items-center justify-between pr-2">
-											<span class="max-w-52 text-left lg:max-w-72">{stat.item}</span>
+											<span class="max-w-52 text-left lg:max-w-72">{item.item}</span>
 											<span class="text-right text-sm font-medium">
 												{#if sortBy.value === 'median'}
-													{stat.median.toFixed(1)}
+													{item.stats.median.toFixed(1)}
 												{:else if sortBy.value === 'min'}
-													{stat.min}
+													{item.stats.min}
 												{:else if sortBy.value === 'max'}
-													{stat.max}
-												{:else if sortBy.value === 'borda'}
-													{stat.bordaPoints}
+													{item.stats.max}
+												{:else if sortBy.value === 'bordaPoints'}
+													{item.stats.bordaPoints}
 												{:else}
-													{stat.spread}
+													{item.stats.spread}
 												{/if}
 											</span>
 										</div>
@@ -317,23 +327,23 @@
 										<div class="grid grid-cols-2 gap-2 rounded-md bg-muted p-2 text-sm">
 											<div>
 												<span class="text-muted-foreground">Median:</span>
-												<span class="font-medium">{stat.median.toFixed(1)}</span>
+												<span class="font-medium">{item.stats.median.toFixed(1)}</span>
 											</div>
 											<div>
 												<span class="text-muted-foreground">Best:</span>
-												<span class="font-medium">{stat.min}</span>
+												<span class="font-medium">{item.stats.min}</span>
 											</div>
 											<div>
 												<span class="text-muted-foreground">Worst:</span>
-												<span class="font-medium">{stat.max}</span>
+												<span class="font-medium">{item.stats.max}</span>
 											</div>
 											<div>
 												<span class="text-muted-foreground">Spread:</span>
-												<span class="font-medium">{stat.spread}</span>
+												<span class="font-medium">{item.stats.spread}</span>
 											</div>
 											<div>
 												<span class="text-muted-foreground">Borda:</span>
-												<span class="font-medium">{stat.bordaPoints}</span>
+												<span class="font-medium">{item.stats.bordaPoints}</span>
 											</div>
 										</div>
 									</AccordionContent>
