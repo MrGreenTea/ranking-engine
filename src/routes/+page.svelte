@@ -18,27 +18,14 @@
 
 	type Phase = 'compare' | 'create' | 'insertion' | 'result';
 
-	const defaultList = 'fruit';
+	const defaultList = 'my first list';
 	let lists = applicationStore<string[]>('lists', [defaultList]);
 	let selectedList = applicationStore<string>('selected-list', lists.value[0]);
 
 	// TODO: I don't like that we have to derive the store...
 	// but without it the reactivity doesn't work
 	// maybe separating into components would help?
-	let items = $derived(
-		localStore<string[]>(selectedList.value, 'ranking-items', [
-			'Apple',
-			'Banana',
-			'Orange',
-			'Kiwi',
-			'Pomegranate',
-			'Pineapple',
-			'Strawberry',
-			'Watermelon',
-			'Mango',
-			'Pear'
-		])
-	);
+	let items = $derived(localStore<string[]>(selectedList.value, 'ranking-items', []));
 	let sortedItems = $derived(localStore<string[]>(selectedList.value, 'ranking-sorted-items', []));
 	let remainingItems = $derived(
 		localStore<string[]>(selectedList.value, 'ranking-remaining-items', [])
