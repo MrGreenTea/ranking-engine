@@ -23,12 +23,12 @@
 	type ItemStats = {
 		item: string;
 		stats: {
-		bordaPoints: number;
-		max: number;
-		median: number;
-		min: number;
-		spread: number;
-	}
+			bordaPoints: number;
+			max: number;
+			median: number;
+			min: number;
+			spread: number;
+		};
 	};
 
 	type SortBy = keyof ItemStats['stats'];
@@ -140,12 +140,13 @@
 			stats.push({
 				item,
 				stats: {
-				bordaPoints: bordaPoints,
-				max: positions[positions.length - 1],
-				median:
-					positions.length % 2 === 0 ? (positions[mid - 1] + positions[mid]) / 2 : positions[mid],
-				min: positions[0],
-				spread: positions[positions.length - 1] - positions[0]}
+					bordaPoints: bordaPoints,
+					max: positions[positions.length - 1],
+					median:
+						positions.length % 2 === 0 ? (positions[mid - 1] + positions[mid]) / 2 : positions[mid],
+					min: positions[0],
+					spread: positions[positions.length - 1] - positions[0]
+				}
 			});
 		}
 

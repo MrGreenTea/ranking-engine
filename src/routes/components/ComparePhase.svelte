@@ -113,7 +113,10 @@
 		<div class="relative my-4">
 			<div class="h-3 w-full overflow-hidden rounded-full bg-secondary">
 				<div
-					class={["h-full transition-all duration-300", comparisonsCount.value > estimatedComparisons.min ? "bg-green-600" : "bg-primary"]}
+					class={[
+						'h-full transition-all duration-300',
+						comparisonsCount.value > estimatedComparisons.min ? 'bg-green-600' : 'bg-primary'
+					]}
 					style="width: {currentProgress.current}%"
 				></div>
 			</div>
