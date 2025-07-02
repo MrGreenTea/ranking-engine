@@ -1,0 +1,48 @@
+meta {
+  name: list issues
+  type: graphql
+  seq: 1
+}
+
+post {
+  url: https://api.linear.app/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query {
+    workflowStates {
+      nodes {
+        name
+        position
+        description
+        type
+      }
+    }
+    issues(
+      filter: {
+        state: { type: { eq: "backlog" } }
+        project: { name: { eq: "Thinking Tools" } }
+      }
+    ) {
+      nodes {
+        id
+        identifier
+        title
+        state {
+          name
+          type
+        }
+        sortOrder
+      }
+    }
+  }
+  
+}
+
+script:post-response {
+  if(req.getAuthMode() == 'oauth2' && res.body.access_token) {
+      bru.setVar('access_token_set_by_collection_script', res.body.access_token);
+  }
+}

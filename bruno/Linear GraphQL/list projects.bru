@@ -1,0 +1,28 @@
+meta {
+  name: list projects
+  type: graphql
+  seq: 2
+}
+
+post {
+  url: https://api.linear.app/graphql
+  body: graphql
+  auth: inherit
+}
+
+body:graphql {
+  query {
+    projects {
+      nodes {
+        name
+      }
+    }
+  }
+  
+}
+
+script:post-response {
+  if(req.getAuthMode() == 'oauth2' && res.body.access_token) {
+      bru.setVar('access_token_set_by_collection_script', res.body.access_token);
+  }
+}

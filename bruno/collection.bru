@@ -1,0 +1,21 @@
+auth {
+  mode: oauth2
+}
+
+auth:oauth2 {
+  grant_type: authorization_code
+  callback_url: http://postman:8000/oauth
+  authorization_url: https://linear.app/oauth/authorize
+  access_token_url: https://api.linear.app/oauth/token
+  client_id: fae082a63a8611ff9debb15ac827199e
+  client_secret: {{linear_oauth_client_secret}}
+  scope: write
+  state: 
+  pkce: false
+}
+
+script:post-response {
+  if(req.getAuthMode() == 'oauth2' && res.body.access_token) {
+      bru.setVar('access_token_set_by_collection_script_linear', res.body.access_token);
+  }
+}
